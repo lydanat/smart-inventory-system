@@ -28,8 +28,8 @@ test.describe('Authentication and Route Guard E2E', () => {
     // 4. Verify landing on dashboard
     await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
     await expect(page.locator(`text=Welcome to ${testStoreName}`)).toBeVisible();
-    await expect(page.locator('text=Your inventory is empty')).toBeVisible();
-    await expect(page.locator('text=Total Items')).toBeVisible();
+    await expect(page.locator('text=Getting Started Checklist')).toBeVisible();
+    await expect(page.locator('text=Total SKUs')).toBeVisible();
 
     // 5. Sign out
     await page.click('button:has-text("OWNER")');

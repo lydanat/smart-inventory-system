@@ -1,6 +1,9 @@
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+
+// Mock 'server-only' so server modules can be tested in Vitest environment
+vi.mock('server-only', () => ({}));
 
 // Load .env.local into process.env for test runs
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
