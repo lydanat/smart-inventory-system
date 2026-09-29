@@ -10,7 +10,9 @@ import { StatCards } from '@/components/dashboard/stat-cards';
 import { AttentionList } from '@/components/dashboard/attention-list';
 import { FastMovers } from '@/components/dashboard/fast-movers';
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
+import { Suspense } from 'react';
 import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist';
+import { AIInsightsWrapper, AIInsightsSkeleton } from '@/components/dashboard/ai-insights-wrapper';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Sparkles } from 'lucide-react';
@@ -74,6 +76,11 @@ export default async function DashboardPage() {
 
       {/* 4 Top KPI Stat Cards */}
       <StatCards summary={summary} />
+
+      {/* AI Business Advisor Card (Streaming Suspense) */}
+      <Suspense fallback={<AIInsightsSkeleton />}>
+        <AIInsightsWrapper businessId={businessId} />
+      </Suspense>
 
       {/* Charts Section: Donut + Bar */}
       <DashboardCharts categories={categoryStock} movements={dailyMovements} />

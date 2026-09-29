@@ -6,39 +6,47 @@
 |---|---|---|---|---|
 | Stage 1 | Scaffold & Tooling | COMPLETED | [x] | `7870211` feat: scaffold nextjs app router... |
 | Stage 2 | Database & RLS | COMPLETED | [x] | `4983cfb` feat: add full postgres schema... |
-| Stage 3 | Auth & Session | COMPLETED | [x] | feat: implement auth flow, session refresh proxy, route guards, and app shell |
+| Stage 3 | Auth & Session | COMPLETED | [x] | `935f118` feat: implement auth flow, session refresh proxy... |
 | Stage 4 | Inventory CRUD | COMPLETED | [x] | `ef3300d` feat: complete Stage 4 inventory CRUD... |
 | Stage 5 | Dashboard | COMPLETED | [x] | `8d6b3ec` feat: complete Stage 5 Dashboard... |
-| Stage 6 | Telegram Bot & Crons | COMPLETED | [x] | Pending commit |
-| Stage 7 | AI Recommendations (Gemini + Rules) | IN PROGRESS | [ ] | Pending |
-| Stage 8 | UI Polish & Responsive States | PENDING | [ ] | Pending |
+| Stage 6 | Telegram Bot & Crons | COMPLETED | [x] | `ac98d12` feat: complete Stage 6 Telegram bot & crons... |
+| Stage 7 | AI Recommendations (Gemini + Rules) | COMPLETED | [x] | Pending commit |
+| Stage 8 | UI Polish & Responsive States | IN PROGRESS | [ ] | Pending |
 | Stage 9 | Security Audit & Pentest | PENDING | [ ] | Pending |
 | Stage 10 | Deployment & Live Demo | PENDING | [ ] | Pending |
 
 ---
 
 ## Current Work
-- Stage 6 completed:
-  - Built Telegram Client (`src/lib/telegram/client.ts`): HTML formatting, rate-limiting retry handling (HTTP 429), and automatic message chunking for messages exceeding Telegram's 4096 character limit.
-  - Built Telegram Link Flow (`src/lib/telegram/link.ts`): High-entropy 6-character link codes, SHA-256 hash storage in `telegram_link_codes`, 15-minute expiry, and single-use atomic consumption.
-  - Built Server Actions (`src/actions/telegram.ts`): `generateTelegramLinkCodeAction`, `sendTestAlertAction`, `disconnectTelegramAction`, `toggleTelegramAlertsAction`.
-  - Built Telegram Webhook (`src/app/api/telegram/webhook/route.ts`):
-    - Constant-time `safeCompare` header verification for `X-Telegram-Bot-Api-Secret-Token`.
-    - Bot commands: `/start <code>` (auto-links store and enables alerts), `/start` (help onboarding), `/status` (instant live inventory health metrics), `/low` (list of low stock / stockout items), `/stop` (disconnects store), and `/help`.
-  - Built Idempotent Cron Endpoints:
-    - `POST /api/cron/low-stock`: Validates `CRON_SECRET` Bearer header, scans active subscribers, checks 24-hour per-item deduplication in `alert_events`, dispatches Telegram notifications.
-    - `POST /api/cron/expiry`: Validates `CRON_SECRET` Bearer header, detects items expiring at 7d, 3d, 1d, and 0d (expired), applies daily deduplication in `alert_events`.
-  - Built Alerts UI (`src/app/(app)/alerts/page.tsx`, `src/components/alerts/alerts-view.tsx`):
-    - Connection card with real-time countdown timer, copy-to-clipboard, auto-linking deep link to `@AIinventorysystemBOT`.
-    - Notification preferences switch.
-    - Available bot commands cheatsheet.
-    - Recent alert audit ledger table.
+- Stage 7 completed:
+  - Built Layer 1 Deterministic Rules Engine (`src/lib/rules/inventory-rules.ts`):
+    - Pure functions with testable fixed dates for `out_of_stock`, `low_stock`, `expired`, `expiring_soon`, `overstock`, `slow_moving`, and `fast_mover`.
+    - Section 10.1 reorder formula: `suggestedReorderQty = max(round(avgDailySales30d * 14) - quantity, threshold * 2 - quantity, 1)`.
+    - Unit tests in `tests/unit/rules.test.ts` (10 tests, 100% passing).
+  - Built Layer 2 Gemini AI Service (`src/lib/services/ai.ts`):
+    - Official `@google/genai` SDK integration with `GoogleGenAI`.
+    - Active model: `gemini-3.8-flash`.
+    - Input building with SHA-256 state hashing for caching (`ai_recommendations` table, 6h expiry).
+    - Strict Anti-Hallucination validation (`src/lib/validation/ai.ts`): Zod schema validation + verification that every referenced item name exists in the catalog.
+    - Rate limiting: max 1 on-demand generation per hour per business (`ai:business:${businessId}`) and global budget tracking (`ai:global`, default 200 calls/day via `check_rate_limit` RPC).
+    - Graceful fallback (`generateRulesFallback`): when Gemini key is unset, rate-limited, or times out (>15s), system falls back seamlessly to deterministic rules synthesis (`source: 'rules_only'`) so the dashboard card never errors out.
+  - Built Feedback & Action System (`src/actions/ai.ts`):
+    - `refreshRecommendationsAction` (with `withAuth`, rate limit checks).
+    - `recordFeedbackAction` (stores thumbs up/down ratings in `ai_feedback`).
+  - Built Dashboard AI Card (`src/components/dashboard/ai-insights-card.tsx`):
+    - Executive summary, Gemini / Rules source badge, updated timestamp.
+    - Restock suggestions with one-click restock pre-filling `StockAdjustDialog`.
+    - Marketing clearance ideas with one-click copy message.
+    - Supplier tips with directory links.
+    - Thumbs up/down feedback affordances.
+    - Non-blocking streaming Suspense wrapper (`AIInsightsWrapper`, `AIInsightsSkeleton`) in `src/app/(app)/dashboard/page.tsx`.
+  - Built Suppliers Directory (`src/app/(app)/suppliers/page.tsx`, `src/components/suppliers/*`):
+    - Full CRUD with Zod validation, search filtering, responsive desktop table and mobile cards.
   - Automated verification:
-    - 33 Vitest tests passing (RLS, validation, utils, Telegram SHA-256 hashing, code expiration, and atomic linking).
-    - 12 Playwright E2E tests passing across desktop and mobile.
-    - Local security test verified: unauthorized requests rejected with 401, authorized requests return 200 `{ ok: true }`.
-    - `next build` compiled cleanly.
-- Starting Stage 7: AI Recommendations (Gemini 2.5 Flash + Deterministic Layer 1 Rules Engine).
+    - 52 Vitest unit & integration tests passing.
+    - 14 Playwright E2E tests passing across desktop and mobile.
+    - `npm run build` compiled cleanly.
+- Starting Stage 8: UI Polish & Responsive States (375px, 768px, 1280px responsiveness, dark mode check, empty & error states everywhere, loading skeletons, PWA `manifest.webmanifest`, accessibility audit).
 
 ---
 
@@ -50,11 +58,14 @@
 ## Test Results
 - Supabase REST connectivity: Verified.
 - Telegram getMe check: Verified bot username `AIinventorysystemBOT`.
-- Gemini API key models list: Verified `gemini-2.5-flash` available.
+- Gemini API key generation: Verified `gemini-3.8-flash` producing grounded JSON recommendations.
+- Unit & integration tests: 52 passed.
+- E2E tests: 14 passed.
+- Production build: Succeeded (`next build`).
 
 ---
 
 ## Assumptions Made
 - Default currency: `USD`.
 - Default timezone: `Asia/Phnom_Penh`.
-- Free tier Gemini model: `gemini-2.5-flash`.
+- Free tier Gemini model: `gemini-3.8-flash`.

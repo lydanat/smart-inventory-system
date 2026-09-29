@@ -98,7 +98,7 @@ describe('Telegram Integration & Security Tests', () => {
     expect(record?.used_at).not.toBeNull();
 
     // Verify re-using the same code fails
-    const secondAttempt = await verifyAndConsumeTelegramCode(code, mockChatId);
+    const secondAttempt = await verifyAndConsumeTelegramCode(code, mockChatId.toString());
     expect(secondAttempt.success).toBe(false);
   });
 
