@@ -12,48 +12,51 @@
 | Stage 6 | Telegram Bot & Crons | COMPLETED | [x] | `ac98d12` feat: complete Stage 6 Telegram bot & crons... |
 | Stage 7 | AI Recommendations (Gemini + Rules) | COMPLETED | [x] | `028b19a` feat: complete Stage 7 AI recommendations... |
 | Stage 8 | UI Polish & Responsive States | COMPLETED | [x] | `9dcf8ba` feat: complete Stage 8 UI polish... |
-| Stage 9 | Security Audit & Pentest | COMPLETED | [x] | Pending commit |
-| Stage 10 | Deployment & Live Demo | IN PROGRESS | [ ] | Pending |
+| Stage 9 | Security Audit & Pentest | COMPLETED | [x] | `88d6be8` feat: complete Stage 9 security audit... |
+| Stage 10 | Deployment & Live Demo | COMPLETED | [x] | Pending commit |
 
 ---
 
-## Current Work
-- Stage 9 completed:
-  - Executed complete security audit and automated penetration test covering all 16 controls from Section 8 and Section 13.
-  - Authored comprehensive `SECURITY_REPORT.md` documenting evidence and verification for all 16 controls (100% PASS, 0 high/critical vulnerabilities).
-  - Built automated pentest test suite (`tests/integration/security-audit.test.ts`):
-    - Multi-tenant cross-tenant read/write isolation.
-    - Sensitive server tables (`rate_limits`, `telegram_link_codes`) blocked from client tokens.
-    - Zod `.strict()` mass-assignment rejection.
-    - Database check constraints on negative price and quantity.
-    - HTML injection protection via `escapeHtml` for Telegram.
-    - Prompt injection defense and anti-hallucination rejection.
-  - Verified cron endpoints reject missing/invalid Bearer tokens (HTTP 401).
-  - Verified Telegram webhook rejects requests without secret header (HTTP 401).
-  - Verified zero secrets in `.next/static` client bundles.
-  - Supply chain hygiene verified: `npm audit` returned 0 vulnerabilities.
-  - Automated tests passing: 58/58 Vitest tests, 16/16 Playwright E2E tests, clean production build (`next build`).
-- Starting Stage 10: Deployment & Live Demo Rehearsal (Section 14 & 15).
-
----
-
-## Known Issues
-- None at present.
+## Complete Project Verification Summary
+All 10 Stages from `PROJECT.md` have been fully built, tested, and verified end-to-end:
+1. **Scaffolding & Tooling (Stage 1):** Next.js 16 App Router, TypeScript strict mode, Tailwind CSS v4, Lucide icons, Vitest, Playwright, strict environment variables.
+2. **Database & RLS (Stage 2):** 11 Postgres tables, triggers, atomic functions (`adjust_stock`, `dashboard_summary`, `check_rate_limit`), and Row-Level Security on 100% of tables.
+3. **Authentication & Session (Stage 3):** Server-side session proxy, multi-tenant creation triggers, role-based access control (`owner`, `manager`, `staff`), route guards.
+4. **Inventory CRUD (Stage 4):** Server-side paginated queries, fuzzy trigram search, status badges, atomic stock adjust modal, item detail view with full movement ledger, IDOR protection, archive with undo.
+5. **Dashboard (Stage 5):** 4 KPI summary cards, dynamic onboarding checklist, Attention list with inline quick restock, fast movers velocity tracker, Recharts category donut & daily movement bars.
+6. **Telegram Bot & Crons (Stage 6):** Deep link flow (`/start <code>`), SHA-256 hashed 15-minute codes, constant-time webhook verification, bot commands (`/start`, `/status`, `/low`, `/stop`, `/help`), daily deduplicated cron digests (`/api/cron/low-stock`, `/api/cron/expiry`).
+7. **AI Advisor & Suppliers (Stage 7):** Layer 1 deterministic rules engine (7 pure rules with Section 10.1 formula), Layer 2 Gemini 3.8 Flash SDK integration with strict anti-hallucination catalog validation, SHA-256 state caching, rate limiting (1/hour/store, global daily budget), graceful zero-error fallback (`rules_only`), supplier directory with CRUD.
+8. **Polish & Responsive Experience (Stage 8):** 375px mobile, 768px tablet, 1280px desktop responsiveness, accessible navigation drawer (`MobileNavDrawer`), Store Settings (currency, timezone, sign out everywhere), PWA Web App Manifest (`manifest.webmanifest`), root error boundary (`error.tsx`).
+9. **Security Audit & Pentest (Stage 9):** Evaluated all 16 security controls in `SECURITY_REPORT.md` (100% PASS, zero high/critical vulnerabilities), zero secrets in client bundles, zero `dangerouslySetInnerHTML`, open redirect defense, prompt injection shielding.
+10. **Deployment & Live Demo (Stage 10):**
+    - Created `scripts/set-telegram-webhook.ts` for instant production webhook registration.
+    - Created `supabase/manual/schedule_cron.sql` for automated `pg_cron` execution.
+    - Full demo rehearsal automated in `tests/e2e/demo-rehearsal.spec.ts`:
+      - Sign up User 1 ("Fresh Harvest Mart")
+      - Add stock ("Organic Fuji Apples", qty: 25, threshold: 5)
+      - Record sale of 22 units -> stock drops to 3 -> Low Stock badge triggered
+      - Telegram link code generation with 15-min countdown
+      - AI Business Advisor recommendations with suggested reorder quantity & one-click restock
+      - User 1 signs out
+      - User 2 signs up ("Green Valley Grocers"), sees 0 SKUs
+      - User 2 attempts IDOR direct navigation to User 1 item URL -> receives safe 404 Not Found!
 
 ---
 
 ## Test Results
-- Supabase REST connectivity: Verified.
-- Telegram getMe check: Verified bot username `AIinventorysystemBOT`.
-- Gemini API key generation: Verified `gemini-3.8-flash` producing grounded JSON recommendations.
-- Unit & integration tests: 58 passed.
-- E2E tests: 16 passed.
-- Production build: Succeeded (`next build`).
-- npm audit: 0 vulnerabilities.
+- **Vitest Unit & Integration:** 58 tests passed (100%).
+- **Playwright E2E Tests:** 18 tests passed across desktop and mobile browsers.
+- **Next.js Production Build:** Succeeded (`next build` compiled cleanly).
+- **npm audit:** 0 vulnerabilities.
+- **Security Audit:** 16 / 16 controls passed in `SECURITY_REPORT.md`.
 
 ---
 
-## Assumptions Made
-- Default currency: `USD`.
-- Default timezone: `Asia/Phnom_Penh`.
-- Free tier Gemini model: `gemini-3.8-flash`.
+## Deployment Readiness Checklist
+- [x] Production build passes cleanly with zero TypeScript or lint errors.
+- [x] All database migrations applied to remote Supabase project `tgwboujyiexgpmsssmqd`.
+- [x] Telegram Bot (`@AIinventorysystemBOT`) configured and verified.
+- [x] Gemini API key active and validated with `gemini-3.8-flash`.
+- [x] Webhook registration script created (`scripts/set-telegram-webhook.ts`).
+- [x] pg_cron schedule script created (`supabase/manual/schedule_cron.sql`).
+- [x] Full demo rehearsal verified without errors.
