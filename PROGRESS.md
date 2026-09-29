@@ -5,9 +5,9 @@
 | Stage | Name | Status | Verified End-to-End | Commit |
 |---|---|---|---|---|
 | Stage 1 | Scaffold & Tooling | COMPLETED | [x] | `7870211` feat: scaffold nextjs app router... |
-| Stage 2 | Database & RLS | COMPLETED | [x] | feat: add full postgres schema, rls policies, triggers, and cross-tenant tests |
-| Stage 3 | Auth & Session | IN PROGRESS | [ ] | Pending |
-| Stage 4 | Inventory CRUD | PENDING | [ ] | Pending |
+| Stage 2 | Database & RLS | COMPLETED | [x] | `4983cfb` feat: add full postgres schema... |
+| Stage 3 | Auth & Session | COMPLETED | [x] | feat: implement auth flow, session refresh proxy, route guards, and app shell |
+| Stage 4 | Inventory CRUD | IN PROGRESS | [ ] | Pending |
 | Stage 5 | Dashboard | PENDING | [ ] | Pending |
 | Stage 6 | Telegram Bot & Crons | PENDING | [ ] | Pending |
 | Stage 7 | AI Recommendations (Gemini + Rules) | PENDING | [ ] | Pending |
@@ -18,15 +18,16 @@
 ---
 
 ## Current Work
-- Stage 2 completed:
-  - Applied full Section 6 schema to Supabase project `tgwboujyiexgpmsssmqd` via migration `20260929000001_full_schema.sql`.
-  - Created tables: `businesses`, `business_members`, `suppliers`, `items`, `stock_movements`, `alert_events`, `ai_recommendations`, `telegram_link_codes`, `rate_limits`, `ai_feedback`, `audit_log`.
-  - Created indexes: trigram search index on items.name, unique sku per active business, low-stock index, expiry index, alert_events deduplication index.
-  - Implemented functions & triggers: `is_member` security definer helper, `adjust_stock` atomic check constraint enforcement, `check_rate_limit` sliding window rate limiter, `dashboard_summary` single-query aggregation, `handle_new_user` on auth.users insert, `set_updated_at`, `audit_items`.
-  - Enabled RLS on all 11 tables with strict policies.
-  - Generated full TypeScript types to `src/types/database.ts`.
-  - Verified 8 cross-tenant and constraint integration tests against the live Supabase database with two distinct tenants (Alpha and Beta).
-- Starting Stage 3: Auth (signup, login, logout, session refresh proxy, route guards, app shell).
+- Stage 3 completed:
+  - Implemented Server Actions: `signUpAction` (with per-IP rate limiting, business metadata, and trigger creation), `loginAction` (with redirect parameter validation against open redirect), and `signOutAction`.
+  - Built Auth UI: `/login` (Suspense-wrapped with client form, error feedback, direct links) and `/signup` (with inline Zod validation, password criteria indicators).
+  - Built responsive App Shell: `(app)/layout.tsx` (server-side defense-in-depth auth check), `AppSidebar` (desktop collapsible + mobile Sheet drawer), `Topbar` (page title, theme toggle, user menu with active store and sign out).
+  - Created initial empty-state dashboard layout and loading skeletons (`loading.tsx`).
+  - Automated verification:
+    - Unit tests: validation and utils passing.
+    - Integration tests: live Supabase handle_new_user trigger creating business and owner role.
+    - E2E Playwright tests (4 passed on desktop Chrome 1280x800 and mobile Chrome 375x667): unauthenticated redirect to `/login`, full signup flow landing on dashboard with store greeting and empty inventory state, and sign out protection.
+- Starting Stage 4: Inventory CRUD (server-side pagination, trigram search, status & category filters, add/edit Sheet, archive with undo toast, atomic adjust_stock, item detail, audit log).
 
 ---
 

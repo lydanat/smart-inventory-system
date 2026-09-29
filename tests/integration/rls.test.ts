@@ -49,7 +49,7 @@ describe('Multi-Tenant RLS & Database Constraints Integration', () => {
     userAClient = createClient<Database>(supabaseUrl, publishableKey, {
       auth: { persistSession: false },
     });
-    const { data: authA, error: signinAError } = await userAClient.auth.signInWithPassword({
+    const { error: signinAError } = await userAClient.auth.signInWithPassword({
       email: emailA,
       password: password,
     });
@@ -58,7 +58,7 @@ describe('Multi-Tenant RLS & Database Constraints Integration', () => {
     userBClient = createClient<Database>(supabaseUrl, publishableKey, {
       auth: { persistSession: false },
     });
-    const { data: authB, error: signinBError } = await userBClient.auth.signInWithPassword({
+    const { error: signinBError } = await userBClient.auth.signInWithPassword({
       email: emailB,
       password: password,
     });
@@ -192,7 +192,8 @@ describe('Multi-Tenant RLS & Database Constraints Integration', () => {
     });
 
     expect(adjustError).toBeNull();
-    expect(updatedItem.quantity).toBe(15);
+    expect(updatedItem).toBeDefined();
+    expect(updatedItem!.quantity).toBe(15);
 
     // 2. Reduction that would cause negative stock (-20 units from 15)
     const { error: belowZeroError } = await userAClient.rpc('adjust_stock', {
