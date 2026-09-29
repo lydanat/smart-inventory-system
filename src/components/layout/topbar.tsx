@@ -4,7 +4,7 @@ import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { UserMenu } from '@/components/layout/user-menu';
-import { AppSidebar } from '@/components/layout/app-sidebar';
+import { MobileNavDrawer } from '@/components/layout/app-sidebar';
 
 interface TopbarProps {
   businessName: string;
@@ -37,7 +37,7 @@ export function Topbar({ businessName, email, role }: TopbarProps) {
       <div className="flex items-center gap-3">
         {/* Mobile menu drawer trigger */}
         <div className="lg:hidden">
-          <AppSidebar businessName={businessName} />
+          <MobileNavDrawer businessName={businessName} />
         </div>
         <h1 className="text-base sm:text-lg font-semibold tracking-tight text-foreground truncate">
           {currentTitle}

@@ -48,11 +48,16 @@ const navItems = [
   },
 ];
 
-export function AppSidebar({ businessName }: SidebarProps) {
+export function SidebarNavContent({
+  businessName,
+  onItemClick,
+}: {
+  businessName: string;
+  onItemClick?: () => void;
+}) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  const NavContent = (
+  return (
     <div className="flex flex-col h-full">
       {/* Brand Header */}
       <div className="h-16 flex items-center px-6 border-b border-border/80 gap-3">
@@ -82,12 +87,14 @@ export function AppSidebar({ businessName }: SidebarProps) {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          const isActive =
+            pathname === item.href ||
+            (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setMobileOpen(false)}
+              onClick={onItemClick}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                 isActive
@@ -109,31 +116,47 @@ export function AppSidebar({ businessName }: SidebarProps) {
       </div>
     </div>
   );
+}
+
+/**
+ * Desktop Sidebar (visible on lg screens >= 1024px)
+ */
+export function AppSidebar({ businessName }: SidebarProps) {
+  return (
+    <aside className="hidden lg:flex flex-col w-64 border-r border-border bg-card shrink-0 select-none">
+      <SidebarNavContent businessName={businessName} />
+    </aside>
+  );
+}
+
+/**
+ * Mobile Navigation Drawer (trigger button + Sheet drawer)
+ */
+export function MobileNavDrawer({ businessName }: SidebarProps) {
+  const [open, setOpen] = React.useState(false);
 
   return (
-    <>
-      {/* Desktop Sidebar (hidden on mobile < 1024px) */}
-      <aside className="hidden lg:flex flex-col w-64 border-r border-border bg-card shrink-0 select-none">
-        {NavContent}
-      </aside>
-
-      {/* Mobile Drawer Trigger (visible on mobile < 1024px) */}
-      <div className="lg:hidden">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Navigation Menu</SheetTitle>
-            </SheetHeader>
-            {NavContent}
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground"
+          aria-label="Toggle navigation menu"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Toggle navigation menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 w-72">
+        <SheetHeader className="sr-only">
+          <SheetTitle>Navigation Menu</SheetTitle>
+        </SheetHeader>
+        <SidebarNavContent
+          businessName={businessName}
+          onItemClick={() => setOpen(false)}
+        />
+      </SheetContent>
+    </Sheet>
   );
 }

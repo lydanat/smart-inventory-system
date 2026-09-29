@@ -10,43 +10,26 @@
 | Stage 4 | Inventory CRUD | COMPLETED | [x] | `ef3300d` feat: complete Stage 4 inventory CRUD... |
 | Stage 5 | Dashboard | COMPLETED | [x] | `8d6b3ec` feat: complete Stage 5 Dashboard... |
 | Stage 6 | Telegram Bot & Crons | COMPLETED | [x] | `ac98d12` feat: complete Stage 6 Telegram bot & crons... |
-| Stage 7 | AI Recommendations (Gemini + Rules) | COMPLETED | [x] | Pending commit |
-| Stage 8 | UI Polish & Responsive States | IN PROGRESS | [ ] | Pending |
-| Stage 9 | Security Audit & Pentest | PENDING | [ ] | Pending |
+| Stage 7 | AI Recommendations (Gemini + Rules) | COMPLETED | [x] | `028b19a` feat: complete Stage 7 AI recommendations... |
+| Stage 8 | UI Polish & Responsive States | COMPLETED | [x] | Pending commit |
+| Stage 9 | Security Audit & Pentest | IN PROGRESS | [ ] | Pending |
 | Stage 10 | Deployment & Live Demo | PENDING | [ ] | Pending |
 
 ---
 
 ## Current Work
-- Stage 7 completed:
-  - Built Layer 1 Deterministic Rules Engine (`src/lib/rules/inventory-rules.ts`):
-    - Pure functions with testable fixed dates for `out_of_stock`, `low_stock`, `expired`, `expiring_soon`, `overstock`, `slow_moving`, and `fast_mover`.
-    - Section 10.1 reorder formula: `suggestedReorderQty = max(round(avgDailySales30d * 14) - quantity, threshold * 2 - quantity, 1)`.
-    - Unit tests in `tests/unit/rules.test.ts` (10 tests, 100% passing).
-  - Built Layer 2 Gemini AI Service (`src/lib/services/ai.ts`):
-    - Official `@google/genai` SDK integration with `GoogleGenAI`.
-    - Active model: `gemini-3.8-flash`.
-    - Input building with SHA-256 state hashing for caching (`ai_recommendations` table, 6h expiry).
-    - Strict Anti-Hallucination validation (`src/lib/validation/ai.ts`): Zod schema validation + verification that every referenced item name exists in the catalog.
-    - Rate limiting: max 1 on-demand generation per hour per business (`ai:business:${businessId}`) and global budget tracking (`ai:global`, default 200 calls/day via `check_rate_limit` RPC).
-    - Graceful fallback (`generateRulesFallback`): when Gemini key is unset, rate-limited, or times out (>15s), system falls back seamlessly to deterministic rules synthesis (`source: 'rules_only'`) so the dashboard card never errors out.
-  - Built Feedback & Action System (`src/actions/ai.ts`):
-    - `refreshRecommendationsAction` (with `withAuth`, rate limit checks).
-    - `recordFeedbackAction` (stores thumbs up/down ratings in `ai_feedback`).
-  - Built Dashboard AI Card (`src/components/dashboard/ai-insights-card.tsx`):
-    - Executive summary, Gemini / Rules source badge, updated timestamp.
-    - Restock suggestions with one-click restock pre-filling `StockAdjustDialog`.
-    - Marketing clearance ideas with one-click copy message.
-    - Supplier tips with directory links.
-    - Thumbs up/down feedback affordances.
-    - Non-blocking streaming Suspense wrapper (`AIInsightsWrapper`, `AIInsightsSkeleton`) in `src/app/(app)/dashboard/page.tsx`.
-  - Built Suppliers Directory (`src/app/(app)/suppliers/page.tsx`, `src/components/suppliers/*`):
-    - Full CRUD with Zod validation, search filtering, responsive desktop table and mobile cards.
-  - Automated verification:
-    - 52 Vitest unit & integration tests passing.
-    - 14 Playwright E2E tests passing across desktop and mobile.
-    - `npm run build` compiled cleanly.
-- Starting Stage 8: UI Polish & Responsive States (375px, 768px, 1280px responsiveness, dark mode check, empty & error states everywhere, loading skeletons, PWA `manifest.webmanifest`, accessibility audit).
+- Stage 8 completed:
+  - Responsive audit across 375px (mobile), 768px (tablet), and 1280px (desktop) verified end-to-end with Playwright.
+  - Split layout components cleanly: `AppSidebar` (desktop persistent sidebar) and `MobileNavDrawer` (accessible mobile drawer with hamburger trigger in topbar).
+  - Built Store Settings (`src/app/(app)/settings/page.tsx`, `src/components/settings/settings-view.tsx`, `src/actions/settings.ts`):
+    - Business name editing, international currency selection (USD, EUR, GBP, KHR, CAD, AUD, SGD, JPY), operational timezone configuration (Asia/Phnom_Penh, UTC, America/New_York, etc.).
+    - Session management with secure global Sign Out.
+  - Added PWA Manifest (`src/app/manifest.ts`) supporting Add-to-Home-Screen on mobile devices.
+  - Added Root App Error Boundary (`src/app/(app)/error.tsx`) with reset retry button and graceful fallbacks without leaking error traces.
+  - Added inline AI/rules recommendation banner to Item Detail page (`src/app/(app)/inventory/[id]/page.tsx`).
+  - Verified dark mode contrast and toggle across all components.
+  - Tests passing: 52 Vitest unit & integration tests, 16 Playwright E2E tests, clean Next.js production build (`next build`).
+- Starting Stage 9: Security Audit & Pentest against Section 8 and Section 13 checklist, producing `SECURITY_REPORT.md`.
 
 ---
 
@@ -60,7 +43,7 @@
 - Telegram getMe check: Verified bot username `AIinventorysystemBOT`.
 - Gemini API key generation: Verified `gemini-3.8-flash` producing grounded JSON recommendations.
 - Unit & integration tests: 52 passed.
-- E2E tests: 14 passed.
+- E2E tests: 16 passed.
 - Production build: Succeeded (`next build`).
 
 ---

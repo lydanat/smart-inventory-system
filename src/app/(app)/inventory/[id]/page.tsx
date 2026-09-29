@@ -23,6 +23,7 @@ import {
   TrendingDown,
   TrendingUp,
   History,
+  Sparkles,
 } from 'lucide-react';
 
 interface ItemDetailPageProps {
@@ -50,6 +51,20 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
   }
 
   const movements = await getItemMovements(member.business_id, id, 50);
+
+  // Check if item is flagged in cached recommendations (no extra AI call)
+  const { data: rec } = await supabase
+    .from('ai_recommendations')
+    .select('payload')
+    .eq('business_id', member.business_id)
+    .gt('expires_at', new Date().toISOString())
+    .order('generated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const restockTip = (rec?.payload as { restock?: Array<{ itemName: string; why: string; urgency: string; suggestedQuantity?: number }> })?.restock?.find(
+    (r) => r.itemName.trim().toLowerCase() === item.name.trim().toLowerCase()
+  );
 
   const profitMargin =
     item.cost_price && item.price > 0
@@ -82,6 +97,26 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Flagged Item AI Recommendation Banner */}
+      {restockTip && (
+        <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-50/60 dark:bg-blue-950/20 flex items-start gap-3 shadow-xs">
+          <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300">
+              Advisor Insight: Restock Action ({restockTip.urgency})
+            </h4>
+            <p className="text-xs text-blue-800/90 dark:text-blue-300/80 leading-relaxed">
+              {restockTip.why}{' '}
+              {restockTip.suggestedQuantity && (
+                <span>
+                  Suggested reorder: <strong>+{restockTip.suggestedQuantity} {item.unit}</strong>.
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Grid Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
