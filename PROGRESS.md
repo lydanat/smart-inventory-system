@@ -7,9 +7,9 @@
 | Stage 1 | Scaffold & Tooling | COMPLETED | [x] | `7870211` feat: scaffold nextjs app router... |
 | Stage 2 | Database & RLS | COMPLETED | [x] | `4983cfb` feat: add full postgres schema... |
 | Stage 3 | Auth & Session | COMPLETED | [x] | feat: implement auth flow, session refresh proxy, route guards, and app shell |
-| Stage 4 | Inventory CRUD | COMPLETED | [x] | Pending commit |
-| Stage 5 | Dashboard | IN PROGRESS | [ ] | Pending |
-| Stage 6 | Telegram Bot & Crons | PENDING | [ ] | Pending |
+| Stage 4 | Inventory CRUD | COMPLETED | [x] | `ef3300d` feat: complete Stage 4 inventory CRUD... |
+| Stage 5 | Dashboard | COMPLETED | [x] | Pending commit |
+| Stage 6 | Telegram Bot & Crons | IN PROGRESS | [ ] | Pending |
 | Stage 7 | AI Recommendations (Gemini + Rules) | PENDING | [ ] | Pending |
 | Stage 8 | UI Polish & Responsive States | PENDING | [ ] | Pending |
 | Stage 9 | Security Audit & Pentest | PENDING | [ ] | Pending |
@@ -18,22 +18,24 @@
 ---
 
 ## Current Work
-- Stage 4 completed:
-  - Built Inventory Service (`src/lib/services/inventory.ts`): Server-side paginated queries with pg_trgm fuzzy search, status filters (low_stock, out_of_stock, expiring_soon, expired), category filter, item details with audit history and stock movement logs.
-  - Built Suppliers Service & Actions (`src/lib/services/suppliers.ts`, `src/actions/suppliers.ts`).
-  - Built Server Actions (`src/actions/items.ts`, `src/actions/stock.ts`): `createItemAction`, `updateItemAction`, `archiveItemAction` (soft delete), `restoreItemAction` (undo), `adjustStockAction` (atomic PostgreSQL RPC `adjust_stock` with check constraint validation).
-  - Built Inventory UI Components:
-    - `StatusBadge`: Dynamic color-coded badge (`In Stock`, `Low Stock`, `Out of Stock`, `Expiring Soon`, `Expired`).
-    - `StockAdjustDialog`: Modal for quick stock updates with optimistic UI, negative stock prevention, and movement reason tracking.
-    - `ItemSheet`: Slide-over form with Zod schema validation and supplier association.
-    - `ItemsTable`: Dual desktop table & responsive mobile cards, keyboard shortcut (`/` to search), instant category/status filters, pagination, and Sonner undo action on archive.
-    - `(app)/inventory/[id]/page.tsx`: Item detail page showing stock metrics, profit margins, supplier cards, and chronological movement ledger.
-    - `(app)/not-found.tsx`: Tenant-isolated not found UI.
+- Stage 5 completed:
+  - Built Dashboard Service (`src/lib/services/dashboard.ts`):
+    - `getDashboardSummary`: Invokes live `dashboard_summary` RPC for SKUs, low stock count, stockout count, expiring soon count, expired count, and inventory valuation.
+    - `getAttentionNeededItems`: Retrieves top 8 critical items prioritized by urgency (expired > out of stock > expiring soon > low stock).
+    - `getFastMovingItems`: Analyzes stock movement ledger for highest negative volume in the last 7 days.
+    - `getStockByCategory`: Aggregates category counts, units, and valuations for interactive donut charts.
+    - `getRecentMovementsChartData`: Computes 14-day inbound (restocks) vs outbound (sales/adjustments) activity.
+  - Built Dashboard Components:
+    - `StatCards`: 4 glanceable KPI cards with valuation tooltip, status badges, and direct links to filtered inventory views (`/inventory?status=...`).
+    - `OnboardingChecklist`: Dynamic progress card for stores with < 3 items, step-by-step progress bar, direct action triggers, and permanent localStorage dismissal.
+    - `AttentionList`: Actionable alert list with urgency badges and inline `StockAdjustDialog` quick restock integration.
+    - `FastMovers`: Top 5 selling items table with stock velocity and remaining quantities.
+    - `DashboardCharts`: Responsive Recharts Donut category distribution with value percentage tooltips and 14-day stacked/grouped bar chart.
   - Automated verification:
     - 30 Vitest unit & integration tests passing.
-    - 4 Playwright E2E tests passing on desktop and mobile: Full CRUD, optimistic quick stock adjustment (recording sales and restocks), item detail movement log, archive + undo toast, and cross-tenant IDOR isolation (Business B cannot view Business A items).
-    - Production build (`next build`) compiled cleanly with zero errors.
-- Starting Stage 5: Dashboard Overview (RPC `dashboard_summary`, KPI stat cards, attention list with quick restock, onboarding checklist, category/movement charts).
+    - 2 Playwright E2E tests passing on desktop and mobile: Dashboard metrics, onboarding checklist step transitions, attention list updates upon adding low stock, inline quick restock restoring healthy status, and dismissal persistence.
+    - `next build` compiled cleanly.
+- Starting Stage 6: Telegram Bot & Crons (webhook, SHA-256 link codes, bot commands `/start`, `/status`, `/low`, `/stop`, scheduled alert crons, Alerts page UI).
 
 ---
 
