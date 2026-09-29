@@ -15,7 +15,7 @@ import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist
 import { AIInsightsWrapper, AIInsightsSkeleton } from '@/components/dashboard/ai-insights-wrapper';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Sparkles } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 
 export default async function DashboardPage() {
   const supabase = await createClient();

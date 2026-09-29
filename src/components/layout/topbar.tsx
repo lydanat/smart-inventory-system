@@ -33,18 +33,18 @@ export function Topbar({ businessName, email, role }: TopbarProps) {
   }
 
   return (
-    <header className="h-16 border-b border-border/80 bg-background/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
-      <div className="flex items-center gap-3">
+    <header className="h-14 sm:h-16 border-b border-border/80 bg-background/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 w-full max-w-full overflow-hidden">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
         {/* Mobile menu drawer trigger */}
-        <div className="lg:hidden">
+        <div className="lg:hidden shrink-0">
           <MobileNavDrawer businessName={businessName} />
         </div>
-        <h1 className="text-base sm:text-lg font-semibold tracking-tight text-foreground truncate">
+        <h1 className="text-sm sm:text-base lg:text-lg font-semibold tracking-tight text-foreground truncate min-w-0">
           {currentTitle}
         </h1>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <ThemeToggle />
         <UserMenu businessName={businessName} email={email} role={role} />
       </div>

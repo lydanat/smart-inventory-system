@@ -8,7 +8,7 @@ import { StockAdjustDialog } from '@/components/inventory/stock-adjust-dialog';
 import { refreshRecommendationsAction, recordFeedbackAction } from '@/actions/ai';
 import { toast } from 'sonner';
 import {
-  Sparkles,
+  Cpu,
   RefreshCw,
   Copy,
   Check,
@@ -135,7 +135,7 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
     return (
       <Card className="border-dashed bg-muted/20">
         <CardContent className="flex flex-col items-center justify-center p-8 text-center space-y-3">
-          <Sparkles className="w-8 h-8 text-muted-foreground animate-pulse" />
+          <Cpu className="w-8 h-8 text-muted-foreground animate-pulse" />
           <div>
             <h4 className="text-base font-medium">No Recommendations Yet</h4>
             <p className="text-xs text-muted-foreground">
@@ -169,7 +169,7 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
                   : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20'
               }`}
             >
-              {isAI ? <Sparkles className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
+              {isAI ? <Cpu className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
             </div>
             <div>
               <div className="flex items-center gap-2">

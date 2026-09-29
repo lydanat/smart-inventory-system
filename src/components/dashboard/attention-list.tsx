@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   AlertCircle,
   Clock,
-  Sparkles,
   CheckCircle2,
   ExternalLink,
   PlusCircle,

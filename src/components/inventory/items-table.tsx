@@ -28,6 +28,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Search,
   MoreHorizontal,
   PlusCircle,
@@ -177,37 +184,45 @@ export function ItemsTable({
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Status Filter */}
-          <select
+          <Select
             value={selectedStatus}
-            onChange={(e) => {
-              setSelectedStatus(e.target.value);
-              updateFilters({ status: e.target.value });
+            onValueChange={(val) => {
+              setSelectedStatus(val);
+              updateFilters({ status: val });
             }}
-            className="h-9 px-3 text-xs font-medium rounded-md border border-input bg-background"
           >
-            <option value="all">All Statuses</option>
-            <option value="low">Low Stock</option>
-            <option value="out">Out of Stock</option>
-            <option value="expiring">Expiring Soon (7d)</option>
-            <option value="expired">Expired</option>
-          </select>
+            <SelectTrigger className="h-9 w-[130px] sm:w-[135px] text-xs font-medium" aria-label="Filter by status">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="low">Low Stock</SelectItem>
+              <SelectItem value="out">Out of Stock</SelectItem>
+              <SelectItem value="expiring">Expiring Soon (7d)</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Category Filter */}
-          <select
+          <Select
             value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              updateFilters({ category: e.target.value });
+            onValueChange={(val) => {
+              setSelectedCategory(val);
+              updateFilters({ category: val });
             }}
-            className="h-9 px-3 text-xs font-medium rounded-md border border-input bg-background"
           >
-            <option value="all">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 w-[130px] sm:w-[145px] text-xs font-medium" aria-label="Filter by category">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Add Item Button */}
           <Button

@@ -10,7 +10,6 @@ import {
   Truck,
   Bell,
   Settings,
-  Sparkles,
   Menu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,7 +57,7 @@ export function SidebarNavContent({
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-card text-card-foreground">
       {/* Brand Header */}
       <div className="h-16 flex items-center px-6 border-b border-border/80 gap-3">
         <div className="w-9 h-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-sm">
@@ -68,9 +67,8 @@ export function SidebarNavContent({
           <span className="font-bold text-sm tracking-tight text-foreground truncate">
             Smart Inventory
           </span>
-          <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            AI Powered
+          <span className="text-[11px] text-muted-foreground font-medium">
+            Inventory Operations
           </span>
         </div>
       </div>
@@ -148,7 +146,7 @@ export function MobileNavDrawer({ businessName }: SidebarProps) {
           <span className="sr-only">Toggle navigation menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 w-72">
+      <SheetContent side="left" className="p-0 w-72 bg-card text-card-foreground border-r shadow-2xl">
         <SheetHeader className="sr-only">
           <SheetTitle>Navigation Menu</SheetTitle>
         </SheetHeader>

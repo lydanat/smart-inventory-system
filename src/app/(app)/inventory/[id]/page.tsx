@@ -23,7 +23,7 @@ import {
   TrendingDown,
   TrendingUp,
   History,
-  Sparkles,
+  Lightbulb,
 } from 'lucide-react';
 
 interface ItemDetailPageProps {
@@ -98,19 +98,19 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
         </div>
       </div>
 
-      {/* Flagged Item AI Recommendation Banner */}
+      {/* Flagged Item Recommendation Banner */}
       {restockTip && (
-        <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-50/60 dark:bg-blue-950/20 flex items-start gap-3 shadow-xs">
-          <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-xl border border-border/80 bg-muted/40 flex items-start gap-3 shadow-xs">
+          <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
-            <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300">
+            <h4 className="text-sm font-semibold text-foreground">
               Advisor Insight: Restock Action ({restockTip.urgency})
             </h4>
-            <p className="text-xs text-blue-800/90 dark:text-blue-300/80 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               {restockTip.why}{' '}
               {restockTip.suggestedQuantity && (
-                <span>
-                  Suggested reorder: <strong>+{restockTip.suggestedQuantity} {item.unit}</strong>.
+                <span className="text-foreground font-medium">
+                  Suggested reorder: +{restockTip.suggestedQuantity} {item.unit}.
                 </span>
               )}
             </p>

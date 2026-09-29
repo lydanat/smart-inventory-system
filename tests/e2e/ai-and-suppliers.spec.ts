@@ -20,7 +20,7 @@ test.describe('AI Recommendations & Suppliers E2E', () => {
 
     // 3. Navigate to /suppliers
     await page.goto('/suppliers');
-    await expect(page.locator('h2:has-text("Supplier Directory")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Suppliers Directory")')).toBeVisible();
 
     // 4. Create a Supplier
     await page.click('button:has-text("Add Supplier")');

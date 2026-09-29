@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Circle, X, ArrowRight, Sparkles, Send } from 'lucide-react';
+import { CheckCircle2, Circle, X, ArrowRight, Compass, Cpu, Send } from 'lucide-react';
 
 interface OnboardingChecklistProps {
   totalItems: number;
@@ -57,7 +57,7 @@ export function OnboardingChecklist({ totalItems }: OnboardingChecklistProps) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
           <div>
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
+              <Compass className="w-4 h-4 text-primary" />
               <h3 className="text-base font-semibold text-foreground">Getting Started Checklist</h3>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -124,8 +124,8 @@ export function OnboardingChecklist({ totalItems }: OnboardingChecklistProps) {
             <Circle className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-foreground flex items-center gap-1">
-                4. AI Analysis
-                <Sparkles className="w-3 h-3 text-primary" />
+                4. Automated Analysis
+                <Cpu className="w-3 h-3 text-primary" />
               </p>
               <p className="text-[11px] text-muted-foreground">Generates reorder insights</p>
             </div>

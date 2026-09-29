@@ -32,10 +32,10 @@ export function UserMenu({ businessName, email, role }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 gap-2 px-3 border-border/80">
-          <Store className="h-4 w-4 text-primary" />
-          <span className="font-medium text-xs max-w-[130px] truncate">{businessName}</span>
-          <Badge variant="secondary" className="text-[10px] px-1 py-0 uppercase font-semibold">
+        <Button variant="outline" size="sm" className="h-8 sm:h-9 gap-1.5 sm:gap-2 px-2 sm:px-3 border-border/80 shrink-0">
+          <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground shrink-0" />
+          <span className="font-medium text-xs max-w-[70px] sm:max-w-[120px] truncate">{businessName}</span>
+          <Badge variant="secondary" className="hidden sm:inline-flex text-[10px] px-1 py-0 uppercase font-semibold">
             {role}
           </Badge>
         </Button>
