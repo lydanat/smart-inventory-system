@@ -24,10 +24,11 @@ export async function signUpAction(rawInput: unknown): Promise<ActionResult<{ su
 
     const { email, password, businessName } = parsed.data;
 
-    // 2. Rate limiting for signups (10 per hour per IP)
+    // 2. Rate limiting for signups (10 per hour per IP in prod, 1000 in dev/test)
     const headerList = await headers();
     const clientIp = headerList.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown-ip';
-    const allowed = await checkRateLimit(`signup:${clientIp}`, 10, '1 hour');
+    const maxSignups = process.env.NODE_ENV !== 'production' ? 1000 : 10;
+    const allowed = await checkRateLimit(`signup:${clientIp}`, maxSignups, '1 hour');
     if (!allowed) {
       return {
         ok: false,

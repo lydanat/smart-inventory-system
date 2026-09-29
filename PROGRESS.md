@@ -7,8 +7,8 @@
 | Stage 1 | Scaffold & Tooling | COMPLETED | [x] | `7870211` feat: scaffold nextjs app router... |
 | Stage 2 | Database & RLS | COMPLETED | [x] | `4983cfb` feat: add full postgres schema... |
 | Stage 3 | Auth & Session | COMPLETED | [x] | feat: implement auth flow, session refresh proxy, route guards, and app shell |
-| Stage 4 | Inventory CRUD | IN PROGRESS | [ ] | Pending |
-| Stage 5 | Dashboard | PENDING | [ ] | Pending |
+| Stage 4 | Inventory CRUD | COMPLETED | [x] | Pending commit |
+| Stage 5 | Dashboard | IN PROGRESS | [ ] | Pending |
 | Stage 6 | Telegram Bot & Crons | PENDING | [ ] | Pending |
 | Stage 7 | AI Recommendations (Gemini + Rules) | PENDING | [ ] | Pending |
 | Stage 8 | UI Polish & Responsive States | PENDING | [ ] | Pending |
@@ -18,16 +18,22 @@
 ---
 
 ## Current Work
-- Stage 3 completed:
-  - Implemented Server Actions: `signUpAction` (with per-IP rate limiting, business metadata, and trigger creation), `loginAction` (with redirect parameter validation against open redirect), and `signOutAction`.
-  - Built Auth UI: `/login` (Suspense-wrapped with client form, error feedback, direct links) and `/signup` (with inline Zod validation, password criteria indicators).
-  - Built responsive App Shell: `(app)/layout.tsx` (server-side defense-in-depth auth check), `AppSidebar` (desktop collapsible + mobile Sheet drawer), `Topbar` (page title, theme toggle, user menu with active store and sign out).
-  - Created initial empty-state dashboard layout and loading skeletons (`loading.tsx`).
+- Stage 4 completed:
+  - Built Inventory Service (`src/lib/services/inventory.ts`): Server-side paginated queries with pg_trgm fuzzy search, status filters (low_stock, out_of_stock, expiring_soon, expired), category filter, item details with audit history and stock movement logs.
+  - Built Suppliers Service & Actions (`src/lib/services/suppliers.ts`, `src/actions/suppliers.ts`).
+  - Built Server Actions (`src/actions/items.ts`, `src/actions/stock.ts`): `createItemAction`, `updateItemAction`, `archiveItemAction` (soft delete), `restoreItemAction` (undo), `adjustStockAction` (atomic PostgreSQL RPC `adjust_stock` with check constraint validation).
+  - Built Inventory UI Components:
+    - `StatusBadge`: Dynamic color-coded badge (`In Stock`, `Low Stock`, `Out of Stock`, `Expiring Soon`, `Expired`).
+    - `StockAdjustDialog`: Modal for quick stock updates with optimistic UI, negative stock prevention, and movement reason tracking.
+    - `ItemSheet`: Slide-over form with Zod schema validation and supplier association.
+    - `ItemsTable`: Dual desktop table & responsive mobile cards, keyboard shortcut (`/` to search), instant category/status filters, pagination, and Sonner undo action on archive.
+    - `(app)/inventory/[id]/page.tsx`: Item detail page showing stock metrics, profit margins, supplier cards, and chronological movement ledger.
+    - `(app)/not-found.tsx`: Tenant-isolated not found UI.
   - Automated verification:
-    - Unit tests: validation and utils passing.
-    - Integration tests: live Supabase handle_new_user trigger creating business and owner role.
-    - E2E Playwright tests (4 passed on desktop Chrome 1280x800 and mobile Chrome 375x667): unauthenticated redirect to `/login`, full signup flow landing on dashboard with store greeting and empty inventory state, and sign out protection.
-- Starting Stage 4: Inventory CRUD (server-side pagination, trigram search, status & category filters, add/edit Sheet, archive with undo toast, atomic adjust_stock, item detail, audit log).
+    - 30 Vitest unit & integration tests passing.
+    - 4 Playwright E2E tests passing on desktop and mobile: Full CRUD, optimistic quick stock adjustment (recording sales and restocks), item detail movement log, archive + undo toast, and cross-tenant IDOR isolation (Business B cannot view Business A items).
+    - Production build (`next build`) compiled cleanly with zero errors.
+- Starting Stage 5: Dashboard Overview (RPC `dashboard_summary`, KPI stat cards, attention list with quick restock, onboarding checklist, category/movement charts).
 
 ---
 
