@@ -11,25 +11,29 @@
 | Stage 5 | Dashboard | COMPLETED | [x] | `8d6b3ec` feat: complete Stage 5 Dashboard... |
 | Stage 6 | Telegram Bot & Crons | COMPLETED | [x] | `ac98d12` feat: complete Stage 6 Telegram bot & crons... |
 | Stage 7 | AI Recommendations (Gemini + Rules) | COMPLETED | [x] | `028b19a` feat: complete Stage 7 AI recommendations... |
-| Stage 8 | UI Polish & Responsive States | COMPLETED | [x] | Pending commit |
-| Stage 9 | Security Audit & Pentest | IN PROGRESS | [ ] | Pending |
-| Stage 10 | Deployment & Live Demo | PENDING | [ ] | Pending |
+| Stage 8 | UI Polish & Responsive States | COMPLETED | [x] | `9dcf8ba` feat: complete Stage 8 UI polish... |
+| Stage 9 | Security Audit & Pentest | COMPLETED | [x] | Pending commit |
+| Stage 10 | Deployment & Live Demo | IN PROGRESS | [ ] | Pending |
 
 ---
 
 ## Current Work
-- Stage 8 completed:
-  - Responsive audit across 375px (mobile), 768px (tablet), and 1280px (desktop) verified end-to-end with Playwright.
-  - Split layout components cleanly: `AppSidebar` (desktop persistent sidebar) and `MobileNavDrawer` (accessible mobile drawer with hamburger trigger in topbar).
-  - Built Store Settings (`src/app/(app)/settings/page.tsx`, `src/components/settings/settings-view.tsx`, `src/actions/settings.ts`):
-    - Business name editing, international currency selection (USD, EUR, GBP, KHR, CAD, AUD, SGD, JPY), operational timezone configuration (Asia/Phnom_Penh, UTC, America/New_York, etc.).
-    - Session management with secure global Sign Out.
-  - Added PWA Manifest (`src/app/manifest.ts`) supporting Add-to-Home-Screen on mobile devices.
-  - Added Root App Error Boundary (`src/app/(app)/error.tsx`) with reset retry button and graceful fallbacks without leaking error traces.
-  - Added inline AI/rules recommendation banner to Item Detail page (`src/app/(app)/inventory/[id]/page.tsx`).
-  - Verified dark mode contrast and toggle across all components.
-  - Tests passing: 52 Vitest unit & integration tests, 16 Playwright E2E tests, clean Next.js production build (`next build`).
-- Starting Stage 9: Security Audit & Pentest against Section 8 and Section 13 checklist, producing `SECURITY_REPORT.md`.
+- Stage 9 completed:
+  - Executed complete security audit and automated penetration test covering all 16 controls from Section 8 and Section 13.
+  - Authored comprehensive `SECURITY_REPORT.md` documenting evidence and verification for all 16 controls (100% PASS, 0 high/critical vulnerabilities).
+  - Built automated pentest test suite (`tests/integration/security-audit.test.ts`):
+    - Multi-tenant cross-tenant read/write isolation.
+    - Sensitive server tables (`rate_limits`, `telegram_link_codes`) blocked from client tokens.
+    - Zod `.strict()` mass-assignment rejection.
+    - Database check constraints on negative price and quantity.
+    - HTML injection protection via `escapeHtml` for Telegram.
+    - Prompt injection defense and anti-hallucination rejection.
+  - Verified cron endpoints reject missing/invalid Bearer tokens (HTTP 401).
+  - Verified Telegram webhook rejects requests without secret header (HTTP 401).
+  - Verified zero secrets in `.next/static` client bundles.
+  - Supply chain hygiene verified: `npm audit` returned 0 vulnerabilities.
+  - Automated tests passing: 58/58 Vitest tests, 16/16 Playwright E2E tests, clean production build (`next build`).
+- Starting Stage 10: Deployment & Live Demo Rehearsal (Section 14 & 15).
 
 ---
 
@@ -42,9 +46,10 @@
 - Supabase REST connectivity: Verified.
 - Telegram getMe check: Verified bot username `AIinventorysystemBOT`.
 - Gemini API key generation: Verified `gemini-3.8-flash` producing grounded JSON recommendations.
-- Unit & integration tests: 52 passed.
+- Unit & integration tests: 58 passed.
 - E2E tests: 16 passed.
 - Production build: Succeeded (`next build`).
+- npm audit: 0 vulnerabilities.
 
 ---
 
