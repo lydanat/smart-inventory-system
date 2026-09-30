@@ -39,11 +39,8 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-const FEATURE_TABS = ['INVENTORY', 'TRACKING', 'ALERTS', 'ANALYTICS', 'AUTOMATION'] as const;
-
 export default function SignupPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = React.useState<typeof FEATURE_TABS[number]>('INVENTORY');
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
 
@@ -93,56 +90,39 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3 sm:p-5 lg:p-8 bg-slate-100/90 dark:bg-zinc-950">
-      <div className="w-full max-w-6xl bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] dark:shadow-none overflow-hidden p-0 grid grid-cols-1 lg:grid-cols-2 items-stretch animate-scale-in">
-        {/* Left Column: Visual Showcase (Magnific Inspired, flush to edges) */}
-        <div className="hidden lg:flex relative overflow-hidden min-h-[640px] h-full flex-col justify-end p-8 sm:p-10 select-none bg-slate-950">
+    <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white dark:bg-zinc-950 p-0 m-0">
+      {/* Left Column: Visual Showcase (Almost full image with rounded corners, no transitions, no header badge) */}
+      <div className="hidden lg:flex flex-col h-full min-h-screen p-3 sm:p-4 lg:p-4 xl:p-5 select-none bg-black">
+        <div className="relative w-full h-full min-h-[calc(100vh-2rem)] xl:min-h-[calc(100vh-2.5rem)] rounded-3xl overflow-hidden flex flex-col justify-end p-8 sm:p-10 xl:p-12">
           <Image
             src="/images/smart-inventory-hero.jpg"
-            alt="Automated Smart Inventory Warehouse"
+            alt="Smart Inventory Warehouse"
             fill
             priority
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            sizes="50vw"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+          {/* Bottom subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
           {/* Overlaid Headline & Subtitle */}
-          <div className="relative z-10 space-y-2 text-white pb-6">
-            <h2 className="text-3xl font-extrabold tracking-tight leading-tight">
-              Intelligent Warehouse OS
+          <div className="relative z-10 space-y-2 text-white">
+            <h2 className="text-2xl xl:text-3xl font-bold tracking-tight leading-tight">
+              Autonomous Inventory
             </h2>
-            <p className="text-xs text-white/80 font-normal max-w-sm leading-relaxed">
-              Automated multi-tenant stock control, real-time alerts, and intelligent restock forecasting.
+            <p className="text-xs sm:text-sm text-white/80 font-normal max-w-md leading-relaxed">
+              Real-time robotics dispatch, stock forecasting, and automated replenishment.
             </p>
           </div>
-
-          {/* Bottom Feature Tabs with Active Indicator Line (Magnific Style) */}
-          <div className="relative z-10 flex items-center gap-6 border-t border-white/15 pt-4 overflow-x-auto no-scrollbar">
-            {FEATURE_TABS.map((tab) => {
-              const isActive = activeTab === tab;
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className="group relative pb-2 text-[10px] font-bold tracking-wider transition-colors uppercase whitespace-nowrap text-white/60 hover:text-white"
-                >
-                  <span className={isActive ? 'text-white' : ''}>{tab}</span>
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full transition-all" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
         </div>
+      </div>
 
-        {/* Right Column: Registration Form */}
-        <div className="flex flex-col justify-center max-w-[420px] w-full mx-auto px-6 sm:px-10 lg:px-12 py-10 sm:py-12 space-y-6">
+      {/* Right Column: Registration Form */}
+      <div className="w-full min-h-screen flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 py-12 bg-white dark:bg-zinc-950">
+        <div className="w-full max-w-[400px] space-y-6 mx-auto">
           {/* Brand Logo & Heading */}
           <div className="text-center space-y-3">
-            <BrandLogo className="w-11 h-11 mx-auto" />
+            <BrandLogo className="w-12 h-12 mx-auto" />
             <div className="space-y-1">
               <h1 className="text-2xl sm:text-[26px] font-bold tracking-tight text-zinc-950 dark:text-white">
                 Create your account
@@ -159,7 +139,7 @@ export default function SignupPage() {
             variant="outline"
             onClick={handleGoogleSignUp}
             disabled={isPending}
-            className="w-full h-11 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 text-zinc-900 dark:text-zinc-100 gap-2.5 text-xs sm:text-sm font-medium shadow-xs active:scale-[0.99] transition-all"
+            className="w-full h-11 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white hover:bg-slate-50 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-zinc-900 dark:text-zinc-100 gap-2.5 text-xs sm:text-sm font-medium shadow-xs active:scale-[0.99] transition-all"
           >
             <GoogleIcon />
             <span>Continue with Google</span>
@@ -171,7 +151,7 @@ export default function SignupPage() {
               <span className="w-full border-t border-slate-200 dark:border-zinc-800" />
             </div>
             <div className="relative flex justify-center text-[11px]">
-              <span className="bg-white dark:bg-zinc-900 px-3 text-zinc-400 dark:text-zinc-500 font-medium">
+              <span className="bg-white dark:bg-zinc-950 px-3 text-zinc-400 dark:text-zinc-500 font-medium">
                 Or continue with email
               </span>
             </div>
@@ -193,7 +173,7 @@ export default function SignupPage() {
                 id="businessName"
                 placeholder="Enter your store name"
                 disabled={isPending}
-                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
+                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
                 {...register('businessName')}
               />
               {errors.businessName && (
@@ -211,7 +191,7 @@ export default function SignupPage() {
                 placeholder="Enter your email"
                 autoComplete="email"
                 disabled={isPending}
-                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
+                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
                 {...register('email')}
               />
               {errors.email && (
@@ -229,7 +209,7 @@ export default function SignupPage() {
                 placeholder="Enter your password"
                 autoComplete="new-password"
                 disabled={isPending}
-                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
+                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
                 {...register('password')}
               />
               {errors.password && (
