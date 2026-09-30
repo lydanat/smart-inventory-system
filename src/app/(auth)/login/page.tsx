@@ -101,19 +101,19 @@ function LoginForm() {
 
   return (
     <div className="w-full min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white dark:bg-zinc-950 p-0 m-0">
-      {/* Left Column: Visual Showcase (Almost full image with rounded corners, no transitions, no header badge) */}
-      <div className="hidden lg:flex flex-col h-full min-h-screen p-3 sm:p-4 lg:p-4 xl:p-5 select-none bg-black">
-        <div className="relative w-full h-full min-h-[calc(100vh-2rem)] xl:min-h-[calc(100vh-2.5rem)] rounded-3xl overflow-hidden flex flex-col justify-end p-8 sm:p-10 xl:p-12">
+      {/* Left Column: Visual Showcase (Almost full image with rounded-lg on white background) */}
+      <div className="hidden lg:flex flex-col h-full min-h-screen p-2.5 lg:p-3 select-none bg-white dark:bg-zinc-950">
+        <div className="relative w-full h-full min-h-[calc(100vh-1.25rem)] lg:min-h-[calc(100vh-1.5rem)] rounded-lg overflow-hidden flex flex-col justify-end p-8 sm:p-10">
           <Image
             src="/images/smart-inventory-hero.jpg"
             alt="Smart Inventory Warehouse"
             fill
             priority
             sizes="50vw"
-            className="object-cover"
+            className="object-cover rounded-lg"
           />
           {/* Bottom subtle gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none rounded-lg" />
 
           {/* Overlaid Headline & Subtitle */}
           <div className="relative z-10 space-y-2 text-white">
