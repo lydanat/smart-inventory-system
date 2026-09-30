@@ -13,7 +13,7 @@
 | Stage 7 | AI Recommendations (Gemini + Rules) | COMPLETED | [x] | `028b19a` feat: complete Stage 7 AI recommendations... |
 | Stage 8 | UI Polish & Responsive States | COMPLETED | [x] | `9dcf8ba` feat: complete Stage 8 UI polish... |
 | Stage 9 | Security Audit & Pentest | COMPLETED | [x] | `88d6be8` feat: complete Stage 9 security audit... |
-| Stage 10 | Deployment & Live Demo | COMPLETED | [x] | Pending commit |
+| Stage 10 | Deployment & Live Demo | COMPLETED | [x] | `d8c96ea` feat: complete Stage 10 deployment & live verification |
 
 ---
 
@@ -29,17 +29,12 @@ All 10 Stages from `PROJECT.md` have been fully built, tested, and verified end-
 8. **Polish & Responsive Experience (Stage 8):** 375px mobile, 768px tablet, 1280px desktop responsiveness, accessible navigation drawer (`MobileNavDrawer`), Store Settings (currency, timezone, sign out everywhere), PWA Web App Manifest (`manifest.webmanifest`), root error boundary (`error.tsx`).
 9. **Security Audit & Pentest (Stage 9):** Evaluated all 16 security controls in `SECURITY_REPORT.md` (100% PASS, zero high/critical vulnerabilities), zero secrets in client bundles, zero `dangerouslySetInnerHTML`, open redirect defense, prompt injection shielding.
 10. **Deployment & Live Demo (Stage 10):**
-    - Created `scripts/set-telegram-webhook.ts` for instant production webhook registration.
-    - Created `supabase/manual/schedule_cron.sql` for automated `pg_cron` execution.
-    - Full demo rehearsal automated in `tests/e2e/demo-rehearsal.spec.ts`:
-      - Sign up User 1 ("Fresh Harvest Mart")
-      - Add stock ("Organic Fuji Apples", qty: 25, threshold: 5)
-      - Record sale of 22 units -> stock drops to 3 -> Low Stock badge triggered
-      - Telegram link code generation with 15-min countdown
-      - AI Business Advisor recommendations with suggested reorder quantity & one-click restock
-      - User 1 signs out
-      - User 2 signs up ("Green Valley Grocers"), sees 0 SKUs
-      - User 2 attempts IDOR direct navigation to User 1 item URL -> receives safe 404 Not Found!
+    - Live URL: [https://smart-inventory-system-gold.vercel.app](https://smart-inventory-system-gold.vercel.app)
+    - Health Check: `GET /api/health` -> `{"ok":true}` (HTTP 200)
+    - Auth & Security: HTTP Security Headers, CSP Report-Only, HSTS, Secure Session Cookies
+    - Telegram Bot Webhook: Successfully registered with Telegram API (`@AIinventorysystemBOT` -> `https://smart-inventory-system-gold.vercel.app/api/telegram/webhook`)
+    - Scheduled Crons: `supabase/manual/schedule_cron.sql` configured for automated low stock and expiry digests
+    - Automated Demo Rehearsal: Passed cleanly in `tests/e2e/demo-rehearsal.spec.ts`
 
 ---
 
