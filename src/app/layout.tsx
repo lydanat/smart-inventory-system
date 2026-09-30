@@ -14,7 +14,16 @@ export const metadata: Metadata = {
   title: 'Smart Inventory AI — Intelligent Stock Management',
   description:
     'Multi-tenant inventory management system with automated Telegram alerts, deterministic stock rules, and Gemini AI insights.',
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
