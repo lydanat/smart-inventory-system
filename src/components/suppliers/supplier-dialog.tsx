@@ -188,16 +188,17 @@ export function SupplierDialog({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
+              className="text-xs sm:text-sm"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="text-xs sm:text-sm">
               {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {isEditing ? 'Save Changes' : 'Create Supplier'}
             </Button>

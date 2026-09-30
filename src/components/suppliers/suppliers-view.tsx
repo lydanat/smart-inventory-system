@@ -131,7 +131,7 @@ export function SuppliersView({ suppliers }: SuppliersViewProps) {
       </div>
 
       {/* Desktop Table (>640px) */}
-      <div className="hidden sm:block rounded-xl border bg-card shadow-xs overflow-hidden">
+      <div className="hidden sm:block rounded-lg border bg-card shadow-xs overflow-hidden">
         {filteredSuppliers.length === 0 ? (
           <div className="h-44 flex flex-col items-center justify-center text-muted-foreground space-y-2 p-6 text-center">
             <Truck className="w-8 h-8 opacity-30" />

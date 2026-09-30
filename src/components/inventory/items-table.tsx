@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { StatusBadge } from '@/components/inventory/status-badge';
 import { StockAdjustDialog } from '@/components/inventory/stock-adjust-dialog';
-import { ItemSheet } from '@/components/inventory/item-sheet';
+import { ItemDialog } from '@/components/inventory/item-dialog';
 import { archiveItemAction, restoreItemAction } from '@/actions/items';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
@@ -240,7 +240,7 @@ export function ItemsTable({
       </div>
 
       {items.length === 0 ? (
-        <Card className="rounded-xl border bg-card shadow-xs">
+        <Card className="rounded-lg border bg-card shadow-xs">
           <CardContent className="h-44 flex flex-col items-center justify-center text-muted-foreground space-y-2 p-6 text-center">
             <p className="text-base font-medium">No items found matching your filters</p>
             <p className="text-xs">Try clearing filters or adding a new product.</p>
@@ -249,7 +249,7 @@ export function ItemsTable({
       ) : (
         <>
           {/* Main Table for Desktop (>640px) */}
-          <div className="hidden sm:block rounded-xl border bg-card shadow-xs overflow-hidden">
+          <div className="hidden sm:block rounded-lg border bg-card shadow-xs overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
@@ -291,7 +291,7 @@ export function ItemsTable({
                           {item.quantity} <span className="text-xs text-muted-foreground font-normal">{item.unit}</span>
                         </span>
                         {/* Inline quick adjust +/- buttons */}
-                        <div className="inline-flex rounded-md shadow-xs -space-x-px">
+                        <div className="inline-flex rounded-lg shadow-xs -space-x-px">
                           <Button
                             variant="outline"
                             size="icon"
@@ -521,8 +521,8 @@ export function ItemsTable({
         </div>
       )}
 
-      {/* Item Form Sheet (Add / Edit) */}
-      <ItemSheet
+      {/* Item Form Dialog (Add / Edit) */}
+      <ItemDialog
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         item={editingItem}

@@ -2,7 +2,19 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export async function createClient() {
-  const cookieStore = await cookies();
+  let cookieStore: {
+    getAll: () => { name: string; value: string }[];
+    set: (name: string, value: string, options?: any) => void;
+  } = {
+    getAll: () => [],
+    set: () => {},
+  };
+
+  try {
+    cookieStore = await cookies();
+  } catch {
+    // Handled gracefully when invoked outside a Next.js request context (e.g., in unit/integration tests)
+  }
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

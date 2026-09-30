@@ -93,7 +93,6 @@ export async function loginAction(
         error: {
           code: 'VALIDATION_ERROR',
           message: 'Invalid email or password format.',
-          fieldErrors: parsed.error.flatten().fieldErrors,
         },
       };
     }
@@ -135,6 +134,81 @@ export async function loginAction(
       error: {
         code: 'INTERNAL_ERROR',
         message: errorObj?.message || 'Failed to sign in. Please try again.',
+      },
+    };
+  }
+}
+
+export async function getGoogleOAuthUrlAction(
+  nextUrl?: string | null
+): Promise<ActionResult<{ url: string }>> {
+  try {
+    const supabase = await createClient();
+    const headerList = await headers();
+    const host = headerList.get('host') || 'localhost:3000';
+    const protocol = headerList.get('x-forwarded-proto') || 'http';
+    const origin = `${protocol}://${host}`;
+
+    let destination = '/dashboard';
+    if (nextUrl && nextUrl.startsWith('/') && !nextUrl.startsWith('//')) {
+      destination = nextUrl;
+    }
+
+    const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(destination)}`;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+
+    if (error || !data.url) {
+      return {
+        ok: false,
+        error: {
+          code: 'BAD_REQUEST',
+          message: error?.message || 'Failed to initialize Google login. Ensure Google Provider is enabled in Supabase.',
+        },
+      };
+    }
+
+    // Pre-flight check if Google provider is actually enabled in Supabase project
+    try {
+      const preflight = await fetch(data.url, { method: 'GET', redirect: 'manual' });
+      if (preflight.status === 400) {
+        const preflightBody = await preflight.json().catch(() => null);
+        if (preflightBody?.msg?.includes('Unsupported provider') || preflightBody?.error_code === 'validation_failed') {
+          return {
+            ok: false,
+            error: {
+              code: 'PROVIDER_DISABLED',
+              message: 'Google Sign-In is not enabled in your Supabase project yet. Please enable Google in Supabase Dashboard → Authentication → Providers → Google.',
+            },
+          };
+        }
+      }
+    } catch {
+      // Ignore network errors in preflight check
+    }
+
+    return {
+      ok: true,
+      data: {
+        url: data.url,
+      },
+    };
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string };
+    return {
+      ok: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: errorObj?.message || 'Failed to start Google sign-in.',
       },
     };
   }

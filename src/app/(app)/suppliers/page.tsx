@@ -20,7 +20,7 @@ export default async function SuppliersPage() {
   const suppliers = await getSuppliers(businessId);
 
   return (
-    <Suspense fallback={<div className="h-96 rounded-xl border bg-card animate-pulse" />}>
+    <Suspense fallback={<div className="h-96 rounded-lg border bg-card animate-pulse" />}>
       <SuppliersView suppliers={suppliers} />
     </Suspense>
   );

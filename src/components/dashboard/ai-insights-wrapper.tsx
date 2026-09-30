@@ -34,7 +34,7 @@ export async function AIInsightsWrapper({ businessId }: AIInsightsWrapperProps) 
 
 export function AIInsightsSkeleton() {
   return (
-    <div className="rounded-xl border border-border/70 p-6 space-y-4 bg-card/60 animate-pulse">
+    <div className="rounded-lg border border-border/70 p-6 space-y-4 bg-card/60 animate-pulse">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Skeleton className="w-9 h-9 rounded-lg" />

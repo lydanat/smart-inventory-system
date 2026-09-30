@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -32,9 +34,10 @@
   --color-status-expired: hsl(var(--status-expired));
   --color-status-expired-bg: hsl(var(--status-expired-bg));
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius: 0.5rem;
+  --radius-lg: 0.5rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.5rem;
 }
 
 @layer base {
@@ -71,6 +74,41 @@
     --status-expiring-bg: 24.6 95% 95%;
     --status-expired: 346.8 77.2% 49.8%;
     --status-expired-bg: 346.8 77.2% 95%;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 6%;
+      --card-foreground: 0 0% 98%;
+      --popover: 240 10% 6%;
+      --popover-foreground: 0 0% 98%;
+      --primary: 0 0% 98%;
+      --primary-foreground: 240 5.9% 10%;
+      --secondary: 240 3.7% 15.9%;
+      --secondary-foreground: 0 0% 98%;
+      --muted: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --accent: 240 3.7% 15.9%;
+      --accent-foreground: 0 0% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 240 3.7% 15.9%;
+      --input: 240 3.7% 15.9%;
+      --ring: 240 4.9% 83.9%;
+
+      --status-ok: 142.1 70.6% 45.3%;
+      --status-ok-bg: 142.1 70.6% 12%;
+      --status-low: 38 92% 55%;
+      --status-low-bg: 38 92% 12%;
+      --status-out: 0 74.2% 55.2%;
+      --status-out-bg: 0 74.2% 14%;
+      --status-expiring: 24.6 90% 55.1%;
+      --status-expiring-bg: 24.6 90% 12%;
+      --status-expired: 346.8 80% 55%;
+      --status-expired-bg: 346.8 80% 12%;
+    }
   }
 
   .dark {
@@ -118,29 +156,9 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
-/* Explicit guaranteed opaque backgrounds for elevated surfaces */
+/* Explicit guaranteed opaque backgrounds for popovers and dialogs */
 .bg-popover {
   background-color: hsl(var(--popover)) !important;
-}
-
-.text-popover-foreground {
-  color: hsl(var(--popover-foreground)) !important;
-}
-
-.bg-card {
-  background-color: hsl(var(--card)) !important;
-}
-
-.text-card-foreground {
-  color: hsl(var(--card-foreground)) !important;
-}
-
-.bg-background {
-  background-color: hsl(var(--background)) !important;
-}
-
-.text-foreground {
-  color: hsl(var(--foreground)) !important;
 }
 
 /* Smooth micro-interactions & modern animations */
@@ -168,9 +186,11 @@ body {
 
 @keyframes slideInLeft {
   from {
+    opacity: 0;
     transform: translateX(-100%);
   }
   to {
+    opacity: 1;
     transform: translateX(0);
   }
 }
@@ -186,4 +206,3 @@ body {
 .animate-slide-left {
   animation: slideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-

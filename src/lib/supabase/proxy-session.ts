@@ -34,10 +34,24 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // If a request lands on /login with an auth code (from OAuth or email callback), forward directly to /auth/callback
+  if (pathname === '/login' && request.nextUrl.searchParams.has('code')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/callback';
+    return NextResponse.redirect(url);
+  }
+
   // Unauthenticated user attempting to access protected application routes
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
+  // /auth routes (such as /auth/callback) must be accessible unauthenticated to exchange tokens
+  const isAuthRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/auth');
   const isApiRoute = pathname.startsWith('/api');
-  const isPublicStatic = pathname.startsWith('/_next') || pathname.startsWith('/favicon.ico') || pathname.includes('.');
+  const isPublicStatic =
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname.includes('.');
 
   if (!user && !isAuthRoute && !isApiRoute && !isPublicStatic && pathname !== '/') {
     const url = request.nextUrl.clone();
@@ -50,10 +64,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Authenticated user trying to access /login or /signup -> redirect to dashboard
-  if (user && isAuthRoute) {
+  if (user && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone();
     const next = url.searchParams.get('next');
-    if (next && next.startsWith('/') && !next.startsWith('//')) {
+    if (next && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/auth') && !next.startsWith('/login')) {
       url.pathname = next;
       url.searchParams.delete('next');
     } else {

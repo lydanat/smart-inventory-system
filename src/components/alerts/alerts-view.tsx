@@ -215,7 +215,7 @@ export function AlertsView({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/10 text-sky-500 flex items-center justify-center">
                     <Send className="w-5 h-5" />
                   </div>
                   <div>
@@ -243,7 +243,7 @@ export function AlertsView({
               {isConnected ? (
                 /* Connected State */
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-muted/40 border border-border space-y-2">
+                  <div className="p-4 rounded-lg bg-muted/40 border border-border space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground font-medium">Active Store:</span>
                       <span className="font-semibold text-foreground">{businessName}</span>
@@ -302,7 +302,7 @@ export function AlertsView({
                     </Button>
                   ) : (
                     /* Display generated code and deep link */
-                    <div className="p-5 rounded-xl border border-primary/30 bg-primary/[0.02] space-y-4">
+                    <div className="p-5 rounded-lg border border-primary/30 bg-primary/[0.02] space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-primary uppercase tracking-wider">
                           One-Time Connection Code

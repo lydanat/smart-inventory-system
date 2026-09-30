@@ -63,7 +63,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
         </p>
       </div>
 
-      <Suspense fallback={<div className="h-96 rounded-xl border bg-card animate-pulse" />}>
+      <Suspense fallback={<div className="h-96 rounded-lg border bg-card animate-pulse" />}>
         <ItemsTable
           items={items}
           totalCount={totalCount}

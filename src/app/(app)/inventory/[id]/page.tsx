@@ -100,7 +100,7 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
 
       {/* Flagged Item Recommendation Banner */}
       {restockTip && (
-        <div className="p-4 rounded-xl border border-border/80 bg-muted/40 flex items-start gap-3 shadow-xs">
+        <div className="p-4 rounded-lg border border-border/80 bg-muted/40 flex items-start gap-3 shadow-xs">
           <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <h4 className="text-sm font-semibold text-foreground">
