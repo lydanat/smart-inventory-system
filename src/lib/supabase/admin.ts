@@ -1,11 +1,26 @@
 import 'server-only';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY!;
+let _supabaseAdmin: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseSecretKey) {
-  throw new Error('Missing Supabase admin environment variables');
+export function getSupabaseAdmin(): SupabaseClient {
+  if (_supabaseAdmin) return _supabaseAdmin;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+
+  if (!supabaseUrl || !supabaseSecretKey) {
+    throw new Error('Missing Supabase admin environment variables: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY must be set');
+  }
+
+  _supabaseAdmin = createClient(supabaseUrl, supabaseSecretKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  return _supabaseAdmin;
 }
 
 /**
@@ -18,9 +33,14 @@ if (!supabaseUrl || !supabaseSecretKey) {
  * 4. Telegram link code creation/redemption
  * NEVER use this client for normal authenticated user CRUD!
  */
-export const supabaseAdmin = createClient(supabaseUrl, supabaseSecretKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
+export const supabaseAdmin: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const client = getSupabaseAdmin();
+    // @ts-expect-error proxy access
+    const val = client[prop];
+    if (typeof val === 'function') {
+      return val.bind(client);
+    }
+    return val;
   },
 });

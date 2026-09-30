@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Topbar } from '@/components/layout/topbar';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AppLayout({
   children,
 }: {
