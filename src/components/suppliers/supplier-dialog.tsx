@@ -120,7 +120,7 @@ export function SupplierDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-3.5 py-1">
             <div className="space-y-1.5">
               <Label htmlFor="name">
                 Company / Supplier Name <span className="text-destructive">*</span>

@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/brand-logo';
+import { Loader2, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -38,8 +39,11 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+const FEATURE_TABS = ['INVENTORY', 'TRACKING', 'ALERTS', 'ANALYTICS', 'AUTOMATION'] as const;
+
 export default function SignupPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = React.useState<typeof FEATURE_TABS[number]>('INVENTORY');
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [isPending, startTransition] = React.useTransition();
 
@@ -89,45 +93,88 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-slate-100/90 dark:bg-zinc-950">
-      <div className="w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-lg border border-slate-200/90 dark:border-zinc-800 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] dark:shadow-none overflow-hidden p-3.5 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center animate-scale-in">
-        {/* Left Column: Visual Showcase */}
-        <div className="hidden md:flex relative rounded-lg overflow-hidden min-h-[580px] h-full flex-col justify-end p-8 select-none bg-slate-950">
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-5 lg:p-8 bg-slate-100/90 dark:bg-zinc-950">
+      <div className="w-full max-w-6xl bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] dark:shadow-none overflow-hidden p-0 grid grid-cols-1 lg:grid-cols-2 items-stretch animate-scale-in">
+        {/* Left Column: Visual Showcase (Magnific Inspired, flush to edges) */}
+        <div className="hidden lg:flex relative overflow-hidden min-h-[640px] h-full flex-col justify-end p-8 sm:p-10 select-none bg-slate-950">
           <Image
             src="/images/smart-inventory-hero.jpg"
             alt="Automated Smart Inventory Warehouse"
             fill
             priority
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 1024px) 100vw, 50vw"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-          {/* Headline */}
-          <div className="relative z-10 space-y-1 text-white">
-            <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-[1.05] uppercase drop-shadow-md">
-              START.
-              <br />
-              CONNECT.
-              <br />
-              SCALE.
+          {/* Overlaid Headline & Subtitle */}
+          <div className="relative z-10 space-y-2 text-white pb-6">
+            <h2 className="text-3xl font-extrabold tracking-tight leading-tight">
+              Intelligent Warehouse OS
             </h2>
-            <p className="text-xs text-white/80 font-normal pt-2 drop-shadow-sm">
-              Next-generation inventory control, multi-tenant analytics & automation.
+            <p className="text-xs text-white/80 font-normal max-w-sm leading-relaxed">
+              Automated multi-tenant stock control, real-time alerts, and intelligent restock forecasting.
             </p>
+          </div>
+
+          {/* Bottom Feature Tabs with Active Indicator Line (Magnific Style) */}
+          <div className="relative z-10 flex items-center gap-6 border-t border-white/15 pt-4 overflow-x-auto no-scrollbar">
+            {FEATURE_TABS.map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className="group relative pb-2 text-[10px] font-bold tracking-wider transition-colors uppercase whitespace-nowrap text-white/60 hover:text-white"
+                >
+                  <span className={isActive ? 'text-white' : ''}>{tab}</span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full transition-all" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Right Column: Registration Form */}
-        <div className="flex flex-col justify-center px-2 sm:px-6 md:px-4 lg:px-8 py-4 sm:py-6 space-y-4">
-          {/* Brand Header */}
-          <div className="text-center space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-950 dark:text-white uppercase">
-              Create your store
-            </h1>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              Set up your isolated tenant inventory with automated reorder intelligence
-            </p>
+        <div className="flex flex-col justify-center max-w-[420px] w-full mx-auto px-6 sm:px-10 lg:px-12 py-10 sm:py-12 space-y-6">
+          {/* Brand Logo & Heading */}
+          <div className="text-center space-y-3">
+            <BrandLogo className="w-11 h-11 mx-auto" />
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-[26px] font-bold tracking-tight text-zinc-950 dark:text-white">
+                Create your account
+              </h1>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Sign up with
+              </p>
+            </div>
+          </div>
+
+          {/* Social Provider: Google */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleGoogleSignUp}
+            disabled={isPending}
+            className="w-full h-11 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 text-zinc-900 dark:text-zinc-100 gap-2.5 text-xs sm:text-sm font-medium shadow-xs active:scale-[0.99] transition-all"
+          >
+            <GoogleIcon />
+            <span>Continue with Google</span>
+          </Button>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-200 dark:border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center text-[11px]">
+              <span className="bg-white dark:bg-zinc-900 px-3 text-zinc-400 dark:text-zinc-500 font-medium">
+                Or continue with email
+              </span>
+            </div>
           </div>
 
           {serverError && (
@@ -138,57 +185,57 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5 animate-fade-in">
-            <div className="space-y-1.5">
-              <Label htmlFor="businessName" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+            <div className="space-y-1">
+              <Label htmlFor="businessName" className="sr-only">
                 Store / Business Name
               </Label>
               <Input
                 id="businessName"
-                placeholder="e.g. Riverside Mart"
+                placeholder="Enter your store name"
                 disabled={isPending}
-                className="h-11 text-xs rounded-lg bg-slate-50/90 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700"
+                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
                 {...register('businessName')}
               />
               {errors.businessName && (
-                <p className="text-[11px] text-destructive font-medium">{errors.businessName.message}</p>
+                <p className="text-[11px] text-destructive font-medium pl-0.5">{errors.businessName.message}</p>
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+            <div className="space-y-1">
+              <Label htmlFor="email" className="sr-only">
                 Email address
               </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="owner@yourstore.com"
+                placeholder="Enter your email"
                 autoComplete="email"
                 disabled={isPending}
-                className="h-11 text-xs rounded-lg bg-slate-50/90 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700"
+                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
                 {...register('email')}
               />
               {errors.email && (
-                <p className="text-[11px] text-destructive font-medium">{errors.email.message}</p>
+                <p className="text-[11px] text-destructive font-medium pl-0.5">{errors.email.message}</p>
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+            <div className="space-y-1">
+              <Label htmlFor="password" className="sr-only">
                 Password
               </Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 autoComplete="new-password"
                 disabled={isPending}
-                className="h-11 text-xs rounded-lg bg-slate-50/90 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700"
+                className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
                 {...register('password')}
               />
               {errors.password && (
-                <p className="text-[11px] text-destructive font-medium">{errors.password.message}</p>
+                <p className="text-[11px] text-destructive font-medium pl-0.5">{errors.password.message}</p>
               )}
-              <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 pt-0.5">
+              <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400 pt-1 pl-0.5">
                 <CheckCircle2
                   className={`w-3.5 h-3.5 ${
                     hasMinLength ? 'text-emerald-500' : 'text-zinc-400 dark:text-zinc-600'
@@ -200,7 +247,7 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 rounded-lg font-semibold text-xs bg-zinc-950 hover:bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 shadow-md active:scale-[0.99] transition-transform"
+              className="w-full h-11 rounded-lg font-medium text-xs sm:text-sm bg-zinc-950 hover:bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 shadow-sm active:scale-[0.99] transition-all"
               disabled={isPending}
             >
               {isPending ? (
@@ -209,30 +256,24 @@ export default function SignupPage() {
                   Creating store...
                 </>
               ) : (
-                'Create account'
+                'Create Account'
               )}
             </Button>
           </form>
 
-          {/* Google OAuth Button */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGoogleSignUp}
-            disabled={isPending}
-            className="w-full h-11 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 text-zinc-900 dark:text-zinc-100 gap-2.5 text-xs font-medium shadow-xs active:scale-[0.99] transition-all"
-          >
-            <GoogleIcon />
-            <span>Sign up with Google</span>
-          </Button>
-
-          {/* Footer */}
+          {/* Footer Navigation */}
           <p className="text-center text-xs text-zinc-500 dark:text-zinc-400 pt-1">
             Already have an account?{' '}
             <Link href="/login" className="text-zinc-950 dark:text-white font-semibold hover:underline">
               Sign in
             </Link>
           </p>
+
+          {/* Security / Compliance Badge (Matching Magnific reCAPTCHA position) */}
+          <div className="pt-2 text-center flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Protected by Supabase Auth & Multi-Tenant RLS</span>
+          </div>
         </div>
       </div>
     </div>

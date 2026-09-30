@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { BrandLogo } from '@/components/ui/brand-logo';
+import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -38,12 +39,15 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+const FEATURE_TABS = ['INVENTORY', 'TRACKING', 'ALERTS', 'ANALYTICS', 'AUTOMATION'] as const;
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next');
   const oauthError = searchParams.get('error');
 
+  const [activeTab, setActiveTab] = React.useState<typeof FEATURE_TABS[number]>('AUTOMATION');
   const [rememberMe, setRememberMe] = React.useState(true);
   const [serverError, setServerError] = React.useState<string | null>(
     oauthError ? 'Authentication session failed. Please try again.' : null
@@ -99,44 +103,87 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-lg border border-slate-200/90 dark:border-zinc-800 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] dark:shadow-none overflow-hidden p-3.5 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center animate-scale-in">
-      {/* Left Column: Visual Showcase */}
-      <div className="hidden md:flex relative rounded-lg overflow-hidden min-h-[560px] h-full flex-col justify-end p-8 select-none bg-slate-950">
+    <div className="w-full max-w-6xl bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] dark:shadow-none overflow-hidden p-0 grid grid-cols-1 lg:grid-cols-2 items-stretch animate-scale-in">
+      {/* Left Column: Visual Showcase (Magnific Inspired, flush to edges) */}
+      <div className="hidden lg:flex relative overflow-hidden min-h-[640px] h-full flex-col justify-end p-8 sm:p-10 select-none bg-slate-950">
         <Image
           src="/images/smart-inventory-hero.jpg"
           alt="Automated Smart Inventory Warehouse"
           fill
           priority
-          sizes="(max-width: 768px) 100vw, 50vw"
+          sizes="(max-width: 1024px) 100vw, 50vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-        {/* High-impact 3-word headline */}
-        <div className="relative z-10 space-y-1 text-white">
-          <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-[1.05] uppercase drop-shadow-md">
-            TRACK.
-            <br />
-            OPTIMIZE.
-            <br />
-            GROW.
+        {/* Overlaid Headline & Subtitle */}
+        <div className="relative z-10 space-y-2 text-white pb-6">
+          <h2 className="text-3xl font-extrabold tracking-tight leading-tight">
+            Autonomous Inventory
           </h2>
-          <p className="text-xs text-white/80 font-normal pt-2 drop-shadow-sm">
-            Intelligent warehouse robotics, stock forecasting & automated reorders.
+          <p className="text-xs text-white/80 font-normal max-w-sm leading-relaxed">
+            Intelligent warehouse robotics, stock forecasting, and automated reorder replenishment.
           </p>
+        </div>
+
+        {/* Bottom Feature Tabs with Active Indicator Line (Magnific Style) */}
+        <div className="relative z-10 flex items-center gap-6 border-t border-white/15 pt-4 overflow-x-auto no-scrollbar">
+          {FEATURE_TABS.map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className="group relative pb-2 text-[10px] font-bold tracking-wider transition-colors uppercase whitespace-nowrap text-white/60 hover:text-white"
+              >
+                <span className={isActive ? 'text-white' : ''}>{tab}</span>
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full transition-all" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Right Column: Authentication Form */}
-      <div className="flex flex-col justify-center px-2 sm:px-6 md:px-4 lg:px-8 py-4 sm:py-6 space-y-5">
-        {/* Brand Header */}
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-zinc-950 dark:text-white uppercase">
-            Welcome Back
-          </h1>
-          <p className="text-xs text-zinc-600 dark:text-zinc-400">
-            Enter your email and password to access your account
-          </p>
+      {/* Right Column: Authentication Panel */}
+      <div className="flex flex-col justify-center max-w-[420px] w-full mx-auto px-6 sm:px-10 lg:px-12 py-10 sm:py-12 space-y-6">
+        {/* Brand Logo & Heading */}
+        <div className="text-center space-y-3">
+          <BrandLogo className="w-11 h-11 mx-auto" />
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-[26px] font-bold tracking-tight text-zinc-950 dark:text-white">
+              Welcome to Smart Inventory
+            </h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Log in with
+            </p>
+          </div>
+        </div>
+
+        {/* Social Provider: Google */}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleGoogleSignIn}
+          disabled={isPending}
+          className="w-full h-11 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 text-zinc-900 dark:text-zinc-100 gap-2.5 text-xs sm:text-sm font-medium shadow-xs active:scale-[0.99] transition-all"
+        >
+          <GoogleIcon />
+          <span>Continue with Google</span>
+        </Button>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-slate-200 dark:border-zinc-800" />
+          </div>
+          <div className="relative flex justify-center text-[11px]">
+            <span className="bg-white dark:bg-zinc-900 px-3 text-zinc-400 dark:text-zinc-500 font-medium">
+              Or continue with email
+            </span>
+          </div>
         </div>
 
         {serverError && (
@@ -146,10 +193,10 @@ function LoginForm() {
           </Alert>
         )}
 
-        {/* Form Container */}
-        <form onSubmit={handleSubmit(onSubmitPassword)} className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+        {/* Email & Password Form */}
+        <form onSubmit={handleSubmit(onSubmitPassword)} className="space-y-3.5 animate-fade-in">
+          <div className="space-y-1">
+            <Label htmlFor="email" className="sr-only">
               Email
             </Label>
             <Input
@@ -158,16 +205,16 @@ function LoginForm() {
               placeholder="Enter your email"
               autoComplete="email"
               disabled={isPending}
-              className="h-11 text-xs rounded-lg bg-slate-50/90 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700"
+              className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
               {...register('email')}
             />
             {errors.email && (
-              <p className="text-[11px] text-destructive font-medium">{errors.email.message}</p>
+              <p className="text-[11px] text-destructive font-medium pl-0.5">{errors.email.message}</p>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+          <div className="space-y-1">
+            <Label htmlFor="password" className="sr-only">
               Password
             </Label>
             <Input
@@ -176,16 +223,16 @@ function LoginForm() {
               placeholder="Enter your password"
               autoComplete="current-password"
               disabled={isPending}
-              className="h-11 text-xs rounded-lg bg-slate-50/90 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700"
+              className="h-11 text-xs sm:text-sm rounded-lg bg-transparent text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 border-slate-200 dark:border-zinc-700 focus-visible:ring-1 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-200"
               {...register('password')}
             />
             {errors.password && (
-              <p className="text-[11px] text-destructive font-medium">{errors.password.message}</p>
+              <p className="text-[11px] text-destructive font-medium pl-0.5">{errors.password.message}</p>
             )}
           </div>
 
-          {/* Remember Me & Forgot Password Row */}
-          <div className="flex items-center justify-between text-xs pt-1">
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between text-xs pt-0.5">
             <label className="flex items-center gap-2 cursor-pointer select-none text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100">
               <input
                 type="checkbox"
@@ -205,10 +252,10 @@ function LoginForm() {
             </button>
           </div>
 
-          {/* Primary Sign In Button */}
+          {/* Primary Action Button */}
           <Button
             type="submit"
-            className="w-full h-11 rounded-lg font-semibold text-xs bg-zinc-950 hover:bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 shadow-md active:scale-[0.99] transition-transform"
+            className="w-full h-11 rounded-lg font-medium text-xs sm:text-sm bg-zinc-950 hover:bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100 shadow-sm active:scale-[0.99] transition-all"
             disabled={isPending}
           >
             {isPending ? (
@@ -217,42 +264,24 @@ function LoginForm() {
                 Signing in...
               </>
             ) : (
-              'Sign In'
+              'Continue'
             )}
           </Button>
         </form>
 
-        {/* Divider */}
-        <div className="relative my-1">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-200 dark:border-zinc-800" />
-          </div>
-          <div className="relative flex justify-center text-[10px] uppercase">
-            <span className="bg-white dark:bg-zinc-900 px-2 text-zinc-400 dark:text-zinc-500 font-semibold tracking-wider">
-              OR
-            </span>
-          </div>
-        </div>
-
-        {/* Google OAuth Button */}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleGoogleSignIn}
-          disabled={isPending}
-          className="w-full h-11 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white hover:bg-slate-50 dark:bg-zinc-800/80 dark:hover:bg-zinc-750 text-zinc-900 dark:text-zinc-100 gap-2.5 text-xs font-medium shadow-xs active:scale-[0.99] transition-all"
-        >
-          <GoogleIcon />
-          <span>Sign in with Google</span>
-        </Button>
-
-        {/* Footer */}
+        {/* Footer Navigation */}
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400 pt-1">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-zinc-950 dark:text-white font-semibold hover:underline">
             Sign up
           </Link>
         </p>
+
+        {/* Security / Compliance Badge (Matching Magnific reCAPTCHA position) */}
+        <div className="pt-2 text-center flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 dark:text-zinc-500">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Protected by Supabase Auth & Multi-Tenant RLS</span>
+        </div>
       </div>
     </div>
   );
@@ -260,8 +289,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-slate-100/90 dark:bg-zinc-950">
-      <React.Suspense fallback={<div className="w-full max-w-4xl h-[560px] rounded-lg border bg-white dark:bg-zinc-900 animate-pulse" />}>
+    <div className="min-h-screen flex items-center justify-center p-3 sm:p-5 lg:p-8 bg-slate-100/90 dark:bg-zinc-950">
+      <React.Suspense fallback={<div className="w-full max-w-6xl h-[640px] rounded-2xl border bg-white dark:bg-zinc-900 animate-pulse" />}>
         <LoginForm />
       </React.Suspense>
     </div>
