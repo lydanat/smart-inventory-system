@@ -112,11 +112,11 @@ export function ItemDialog({
           unit: 'pcs',
           quantity: 0,
           lowStockThreshold: 5,
-          costPrice: null,
+          costPrice: null as number | null,
           price: 0,
-          expiryDate: null,
-          supplierId: null,
-          notes: null,
+          expiryDate: null as string | null,
+          supplierId: null as string | null,
+          notes: null as string | null,
         });
       }
     }
@@ -148,213 +148,196 @@ export function ItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl w-[95vw] sm:w-full max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-lg">
-        <DialogHeader className="p-4 sm:p-6 pb-3 border-b border-border/80">
-          <DialogTitle className="text-lg sm:text-xl font-bold">
-            {isEditing ? 'Edit Item' : 'Add New Item'}
-          </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
-            {isEditing
-              ? 'Update product details and stock thresholds.'
-              : 'Add a new product to your store inventory.'}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[520px]">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl font-bold">
+              {isEditing ? 'Edit Item' : 'Add New Item'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {isEditing
+                ? 'Update product details and stock thresholds.'
+                : 'Add a new product to your store inventory.'}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex-1 flex flex-col justify-between overflow-hidden"
-        >
-          {/* Hidden price inputs (hidden per user instruction) */}
+          {/* Hidden price inputs (per user instruction) */}
           <input type="hidden" {...register('price', { valueAsNumber: true })} />
           <input type="hidden" {...register('costPrice', { valueAsNumber: true })} />
 
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
-            {/* Section 1: Basic Info */}
-            <div className="space-y-3.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b pb-1">
-                Basic Information
-              </h4>
+          <div className="space-y-3.5 py-3">
+            {/* Product Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-xs font-medium">
+                Product Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="name"
+                placeholder="e.g. Whole Grain Wheat Bread 500g"
+                disabled={isPending}
+                className="rounded-lg"
+                {...register('name')}
+              />
+              {errors.name && (
+                <p className="text-xs text-destructive font-medium">{errors.name.message}</p>
+              )}
+            </div>
+
+            {/* SKU and Unit */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="space-y-1.5">
+                <Label htmlFor="sku" className="text-xs font-medium">SKU / Barcode</Label>
+                <Input
+                  id="sku"
+                  placeholder="e.g. BRD-001"
+                  disabled={isPending}
+                  className="rounded-lg"
+                  {...register('sku')}
+                />
+                {errors.sku && (
+                  <p className="text-xs text-destructive font-medium">{errors.sku.message}</p>
+                )}
+              </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-xs font-medium">
-                  Product Name <span className="text-destructive">*</span>
+                <Label htmlFor="unit" className="text-xs font-medium">Unit</Label>
+                <Input
+                  id="unit"
+                  placeholder="pcs, bottles, kg"
+                  disabled={isPending}
+                  className="rounded-lg"
+                  {...register('unit')}
+                />
+                {errors.unit && (
+                  <p className="text-xs text-destructive font-medium">{errors.unit.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Category */}
+            <div className="space-y-1.5">
+              <Label htmlFor="category" className="text-xs font-medium">Category</Label>
+              <Input
+                id="category"
+                placeholder="e.g. Bakery, Beverages, Dairy"
+                disabled={isPending}
+                className="rounded-lg"
+                {...register('category')}
+              />
+              {errors.category && (
+                <p className="text-xs text-destructive font-medium">{errors.category.message}</p>
+              )}
+            </div>
+
+            {/* Stock Levels */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="space-y-1.5">
+                <Label htmlFor="quantity" className="text-xs font-medium">
+                  {isEditing ? 'Current Quantity' : 'Starting Quantity'}{' '}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <Input
-                  id="name"
-                  placeholder="e.g. Whole Grain Wheat Bread 500g"
-                  disabled={isPending}
+                  id="quantity"
+                  type="number"
+                  min={0}
+                  disabled={isPending || isEditing}
                   className="rounded-lg"
-                  {...register('name')}
+                  {...register('quantity', { valueAsNumber: true })}
                 />
-                {errors.name && (
-                  <p className="text-xs text-destructive font-medium">{errors.name.message}</p>
+                {isEditing && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Use quick adjust to modify existing stock.
+                  </p>
+                )}
+                {errors.quantity && (
+                  <p className="text-xs text-destructive font-medium">{errors.quantity.message}</p>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1.5">
-                  <Label htmlFor="sku" className="text-xs font-medium">SKU / Barcode</Label>
-                  <Input
-                    id="sku"
-                    placeholder="e.g. BRD-001"
-                    disabled={isPending}
-                    className="rounded-lg"
-                    {...register('sku')}
-                  />
-                  {errors.sku && (
-                    <p className="text-xs text-destructive font-medium">{errors.sku.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="unit" className="text-xs font-medium">Unit</Label>
-                  <Input
-                    id="unit"
-                    placeholder="pcs, bottles, kg"
-                    disabled={isPending}
-                    className="rounded-lg"
-                    {...register('unit')}
-                  />
-                  {errors.unit && (
-                    <p className="text-xs text-destructive font-medium">{errors.unit.message}</p>
-                  )}
-                </div>
-              </div>
-
               <div className="space-y-1.5">
-                <Label htmlFor="category" className="text-xs font-medium">Category</Label>
+                <Label htmlFor="lowStockThreshold" className="text-xs font-medium">Low Stock Alert at</Label>
                 <Input
-                  id="category"
-                  placeholder="e.g. Bakery, Beverages, Dairy"
+                  id="lowStockThreshold"
+                  type="number"
+                  min={0}
                   disabled={isPending}
                   className="rounded-lg"
-                  {...register('category')}
+                  {...register('lowStockThreshold', { valueAsNumber: true })}
                 />
-                {errors.category && (
-                  <p className="text-xs text-destructive font-medium">{errors.category.message}</p>
+                {errors.lowStockThreshold && (
+                  <p className="text-xs text-destructive font-medium">
+                    {errors.lowStockThreshold.message}
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Section 2: Stock Levels & Alerts */}
-            <div className="space-y-3.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b pb-1">
-                Stock Levels & Alerts
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1.5">
-                  <Label htmlFor="quantity" className="text-xs font-medium">
-                    {isEditing ? 'Current Quantity' : 'Starting Quantity'}{' '}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min={0}
-                    disabled={isPending || isEditing}
-                    className="rounded-lg"
-                    {...register('quantity', { valueAsNumber: true })}
-                  />
-                  {isEditing && (
-                    <p className="text-[11px] text-muted-foreground">
-                      Use the quick adjust action to change stock.
-                    </p>
-                  )}
-                  {errors.quantity && (
-                    <p className="text-xs text-destructive font-medium">{errors.quantity.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="lowStockThreshold" className="text-xs font-medium">Low Stock Alert at</Label>
-                  <Input
-                    id="lowStockThreshold"
-                    type="number"
-                    min={0}
-                    disabled={isPending}
-                    className="rounded-lg"
-                    {...register('lowStockThreshold', { valueAsNumber: true })}
-                  />
-                  {errors.lowStockThreshold && (
-                    <p className="text-xs text-destructive font-medium">
-                      {errors.lowStockThreshold.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+            {/* Supplier */}
+            <div className="space-y-1.5">
+              <Label htmlFor="supplierId" className="text-xs font-medium">Linked Supplier</Label>
+              <Select
+                defaultValue={item?.supplier_id || undefined}
+                onValueChange={(val) =>
+                  setValue('supplierId', val === 'none' ? null : val, { shouldValidate: true })
+                }
+              >
+                <SelectTrigger id="supplierId" className="rounded-lg">
+                  <SelectValue placeholder="Select supplier (optional)" />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="none">None / No supplier</SelectItem>
+                  {suppliers.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Section 3: Expiry & Supplier */}
-            <div className="space-y-3.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b pb-1">
-                Supplier & Expiry
-              </h4>
+            {/* Expiry Date */}
+            <div className="space-y-1.5">
+              <Label htmlFor="expiryDate" className="text-xs font-medium">Expiry Date</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                disabled={isPending}
+                className="rounded-lg"
+                {...register('expiryDate')}
+              />
+              {errors.expiryDate && (
+                <p className="text-xs text-destructive font-medium">{errors.expiryDate.message}</p>
+              )}
+            </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="supplierId" className="text-xs font-medium">Linked Supplier</Label>
-                <Select
-                  defaultValue={item?.supplier_id || undefined}
-                  onValueChange={(val) =>
-                    setValue('supplierId', val === 'none' ? null : val, { shouldValidate: true })
-                  }
-                >
-                  <SelectTrigger id="supplierId" className="rounded-lg">
-                    <SelectValue placeholder="Select supplier (optional)" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-lg">
-                    <SelectItem value="none">None / No supplier</SelectItem>
-                    {suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="expiryDate" className="text-xs font-medium">Expiry Date</Label>
-                <Input
-                  id="expiryDate"
-                  type="date"
-                  disabled={isPending}
-                  className="rounded-lg"
-                  {...register('expiryDate')}
-                />
-                {errors.expiryDate && (
-                  <p className="text-xs text-destructive font-medium">{errors.expiryDate.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="notes" className="text-xs font-medium">Notes / Storage Instructions</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="e.g. Keep refrigerated at 4°C. Aisle 3 Shelf B."
-                  disabled={isPending}
-                  rows={2}
-                  className="rounded-lg"
-                  {...register('notes')}
-                />
-                {errors.notes && (
-                  <p className="text-xs text-destructive font-medium">{errors.notes.message}</p>
-                )}
-              </div>
+            {/* Notes */}
+            <div className="space-y-1.5">
+              <Label htmlFor="notes" className="text-xs font-medium">Notes / Storage Instructions</Label>
+              <Textarea
+                id="notes"
+                placeholder="e.g. Keep refrigerated at 4°C. Aisle 3 Shelf B."
+                disabled={isPending}
+                rows={2}
+                className="rounded-lg"
+                {...register('notes')}
+              />
+              {errors.notes && (
+                <p className="text-xs text-destructive font-medium">{errors.notes.message}</p>
+              )}
             </div>
           </div>
 
-          <DialogFooter className="p-3.5 sm:p-4 border-t border-border/80 bg-muted/20 flex flex-row items-center justify-end gap-2.5">
+          <DialogFooter className="gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="rounded-lg"
+              className="text-xs sm:text-sm rounded-lg"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending} className="font-semibold rounded-lg">
+            <Button type="submit" disabled={isPending} className="text-xs sm:text-sm font-semibold rounded-lg">
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
