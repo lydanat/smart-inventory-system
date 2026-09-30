@@ -334,24 +334,35 @@ export async function getOrGenerateRecommendations(
       const ai = new GoogleGenAI({ apiKey });
       const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 
-      // Call Gemini with 15s timeout
+      // Call Gemini with 15s timeout and retry on 503/429 temporary demand spikes
       const generateWithTimeout = async () => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
-        try {
-          const response = await ai.models.generateContent({
-            model: modelName,
-            contents: prompt,
-            config: {
-              responseMimeType: 'application/json',
-              temperature: 0.4,
-              maxOutputTokens: 800,
-            },
-          });
-          return response.text || '';
-        } finally {
-          clearTimeout(timeout);
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          try {
+            const response = await ai.models.generateContent({
+              model: modelName,
+              contents: prompt,
+              config: {
+                responseMimeType: 'application/json',
+                temperature: 0.4,
+                maxOutputTokens: 2048,
+              },
+            });
+            return response.text || '';
+          } catch (err: unknown) {
+            const errMsg = (err as Error)?.message || '';
+            if (attempt === 1 && (errMsg.includes('503') || errMsg.includes('429'))) {
+              logger.warn('Gemini temporary spike (503/429), retrying in 2s...', { attempt, error: errMsg });
+              await new Promise((r) => setTimeout(r, 2000));
+            } else {
+              throw err;
+            }
+          } finally {
+            clearTimeout(timeout);
+          }
         }
+        return '';
       };
 
       let rawResponse = await generateWithTimeout();

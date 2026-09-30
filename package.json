@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:ai": "node scripts/test-ai.mjs",
     "test:e2e": "playwright test",
     "db:types": "supabase gen types typescript --linked > src/types/database.ts"
   },
