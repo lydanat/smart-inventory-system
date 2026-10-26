@@ -194,7 +194,7 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
                       : 'border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40'
                   }`}
                 >
-                  {isAI ? 'Gemini 3.8 Flash' : 'Deterministic Rules'}
+                  {isAI ? 'Gemini AI Active' : 'Deterministic Rules'}
                 </Badge>
               </div>
               <CardDescription className="text-xs flex items-center gap-1.5 mt-0.5">

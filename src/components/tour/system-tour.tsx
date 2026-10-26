@@ -50,12 +50,12 @@ const TOUR_STEPS: TourStep[] = [
     tip: 'Everything updates live across desktop, tablet, and mobile browsers.',
   },
   {
-    title: 'AI Business Advisor (Gemini 3.8 Flash)',
+    title: 'AI Business Advisor (Google Gemini)',
     badge: 'AI Intelligence',
     badgeColor: 'border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40',
     icon: Sparkles,
     description:
-      'Powered by Google Gemini 3.8 Flash and our deterministic rule engine, the AI advisor analyzes your sales velocity and inventory levels every hour.',
+      'Powered by Google Gemini and our deterministic rule engine, the AI advisor analyzes your sales velocity and inventory levels every hour.',
     keyFeatures: [
       'Prioritized restock recommendations with suggested reorder quantities',
       '2 to 3 targeted marketing clearance campaigns with ready-to-copy promo copy',

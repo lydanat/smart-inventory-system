@@ -26,6 +26,20 @@ const pageTitles: Record<string, string> = {
 export function Topbar({ businessName, email, role }: TopbarProps) {
   const pathname = usePathname();
   const [tourOpen, setTourOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleOpen = () => setTourOpen(true);
+    window.addEventListener('open-system-tour', handleOpen);
+
+    // Auto-open if query param ?tour=true is present
+    if (typeof window !== 'undefined' && window.location.search.includes('tour=true')) {
+      setTourOpen(true);
+    }
+
+    return () => {
+      window.removeEventListener('open-system-tour', handleOpen);
+    };
+  }, []);
   
   // Find matching title or default
   let currentTitle = 'Smart Inventory';
@@ -54,11 +68,11 @@ export function Topbar({ businessName, email, role }: TopbarProps) {
             variant="outline"
             size="sm"
             onClick={() => setTourOpen(true)}
-            className="h-8 gap-1.5 text-xs font-medium border-border/80 shadow-xs hover:bg-accent"
+            className="h-8 gap-1.5 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/10 shadow-xs"
             title="Interactive Guided Tour of the Smart Inventory System"
           >
-            <Compass className="w-3.5 h-3.5 text-primary" />
-            <span className="hidden sm:inline">Take a Tour</span>
+            <Compass className="w-4 h-4 text-primary" />
+            <span className="inline">Take a Tour</span>
           </Button>
 
           <ThemeToggle />

@@ -65,7 +65,17 @@ export function OnboardingChecklist({ totalItems }: OnboardingChecklistProps) {
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <div className="w-32 bg-muted rounded-full h-2 overflow-hidden">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-system-tour'))}
+              className="h-7 text-xs gap-1 font-medium border-primary/40 text-primary hover:bg-primary/10 shadow-xs"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Take Tour</span>
+            </Button>
+            <div className="w-24 sm:w-28 bg-muted rounded-full h-2 overflow-hidden">
               <div
                 className="bg-primary h-full rounded-full transition-all duration-500"
                 style={{ width: `${percentComplete}%` }}

@@ -107,14 +107,14 @@ Respond with ONLY valid JSON matching the schema below. No prose before or after
 
 SCHEMA:
 {
-  "summary": string,              // 1-2 sentences, the single most important thing today
-  "marketing": [                  // MUST provide 2 to 3 practical marketing strategies! Prioritize overstock/slow_moving/expiring_soon items; if none, generate bundle, flash sale, or customer loyalty promotions using available items from DATA
+  "summary": string,              // 1-2 sentences, the single most important operational takeaway today
+  "marketing": [                  // MUST provide 2 to 3 DISTINCT, creative retail marketing strategies! Prioritize overstock/slow_moving/expiring_soon items; if none, generate bundle, flash sale, or customer loyalty promotions using available items from DATA
     {
-      "title": string,
+      "title": string,            // Catchy marketing campaign title (e.g., "Dinner Pairing Combo", "Weekend Flash Clearance", "VIP Member Perk")
       "targetItemNames": string[], // MUST be real item names from DATA
-      "idea": string,
-      "channel": "in-store sign" | "social media" | "sms" | "telegram broadcast",
-      "sampleMessage": string      // ready to copy-paste, under 200 chars
+      "idea": string,             // 1-2 sentences explaining the specific marketing angle (e.g., pair with sides for 15% off, 48-hour flash discount, double loyalty points)
+      "channel": "in-store sign" | "social media" | "sms" | "telegram broadcast", // Vary channels across items!
+      "sampleMessage": string      // Actionable, copy-paste ready promotional message under 200 chars with engaging retail hook & emojis
     }
   ],
   "restock": [                    // 0-3 items, ONLY for low_stock/out_of_stock/fast_mover flags
@@ -172,43 +172,61 @@ export function generateRulesFallback(
     suggestedQuantity: f.suggestedReorderQty || f.threshold * 2,
   }));
 
-  // Marketing suggestions from expiring_soon, overstock, slow_moving
-  const promoCandidates = flags.filter((f) =>
-    ['expiring_soon', 'overstock', 'slow_moving'].includes(f.flag)
-  );
-  const marketing: MarketingItem[] = promoCandidates.slice(0, 3).map((f) => ({
-    title: f.flag === 'expiring_soon' ? 'Freshness Clearance' : 'Inventory Promotion',
-    targetItemNames: [f.itemName],
-    idea:
-      f.flag === 'expiring_soon'
-        ? `Discount ${f.itemName} to sell before expiry date.`
-        : `Run a featured promotion to accelerate turnover for ${f.itemName}.`,
-    channel: 'in-store sign',
-    sampleMessage: `Special offer on ${f.itemName}! Pick up yours today while supplies last.`,
-  }));
-
-  // Ensure 2-3 marketing strategies are ALWAYS returned
-  const fallbackItem1 = allItems[0]?.name || flags[0]?.itemName || 'Featured Product';
-  if (marketing.length < 2) {
-    marketing.push({
-      title: 'Customer Loyalty Reward',
-      targetItemNames: [fallbackItem1],
-      idea: `Reward repeat customers with bonus loyalty points on ${fallbackItem1}.`,
-      channel: 'social media' as const,
-      sampleMessage: `Member Special: Enjoy exclusive rewards and double points on ${fallbackItem1} this week!`,
-    });
+  // Gather unique promotional items from flags and catalog
+  const distinctPromoItems: string[] = [];
+  for (const f of flags) {
+    if (['expiring_soon', 'overstock', 'slow_moving'].includes(f.flag) && !distinctPromoItems.includes(f.itemName)) {
+      distinctPromoItems.push(f.itemName);
+    }
+  }
+  for (const item of allItems) {
+    if (!distinctPromoItems.includes(item.name)) {
+      distinctPromoItems.push(item.name);
+    }
+  }
+  for (const f of flags) {
+    if (!distinctPromoItems.includes(f.itemName)) {
+      distinctPromoItems.push(f.itemName);
+    }
+  }
+  if (distinctPromoItems.length === 0) {
+    distinctPromoItems.push('Featured Item');
   }
 
-  const fallbackItem2 = allItems[1]?.name || flags[1]?.itemName || fallbackItem1;
-  if (marketing.length < 3) {
-    marketing.push({
+  const item1 = distinctPromoItems[0];
+  const item2 = distinctPromoItems[1] || item1;
+  const item3 = distinctPromoItems[2] || item2;
+
+  const hasExpiring = flags.some((f) => f.flag === 'expiring_soon');
+
+  // Ensure 3 distinct, creative marketing strategies across different channels
+  const marketing: MarketingItem[] = [
+    {
+      title: hasExpiring ? 'Freshness Batch Clearance' : 'Combo Pairing Bundle',
+      targetItemNames: [item1],
+      idea: hasExpiring
+        ? `Offer an attractive 25% discount on ${item1} to ensure complete sell-through before fresh batch arrival.`
+        : `Pair ${item1} with complementary store products for an attractive package deal (e.g., 15% combo discount).`,
+      channel: 'in-store sign' as const,
+      sampleMessage: hasExpiring
+        ? `Freshness Special: Take 25% off ${item1} today only! Grab top quality at our lowest price.`
+        : `Pair & Save: Buy ${item1} today and enjoy 15% off any complementary pairing item!`,
+    },
+    {
       title: 'Weekend Flash Special',
-      targetItemNames: [fallbackItem2],
-      idea: `Drive weekend store traffic with a limited-time flash promotion on ${fallbackItem2}.`,
+      targetItemNames: [item2],
+      idea: `Drive urgent store traffic and accelerate stock velocity with a limited-time 20% flash promotion on ${item2}.`,
+      channel: 'social media' as const,
+      sampleMessage: `⚡ Flash Deal: Special 20% savings on ${item2} today for store followers! Limited quantities while supplies last.`,
+    },
+    {
+      title: 'VIP Club Member Perk',
+      targetItemNames: [item3],
+      idea: `Reward repeat loyal customers with exclusive bonus loyalty points or member pricing on ${item3}.`,
       channel: 'telegram broadcast' as const,
-      sampleMessage: `⚡ Flash Deal: Special limited-time pricing on ${fallbackItem2} for store followers today!`,
-    });
-  }
+      sampleMessage: `⭐ VIP Exclusive: Double reward points on all purchases of ${item3} through tomorrow! Show this alert at the register.`,
+    },
+  ];
 
   // Supplier tips from flags with linked or category suppliers
   const supplierCategories = Array.from(
@@ -369,36 +387,47 @@ export async function getOrGenerateRecommendations(
     try {
       const prompt = buildPrompt(input);
       const ai = new GoogleGenAI({ apiKey });
-      const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+      const preferredModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+      const candidateModels = Array.from(
+        new Set([preferredModel, 'gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-flash-latest'])
+      );
 
-      // Call Gemini with 15s timeout and retry on 503/429 temporary demand spikes
+      // Call Gemini with timeout and automatic multi-model failover on 503/429/404
       const generateWithTimeout = async () => {
-        for (let attempt = 1; attempt <= 2; attempt++) {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 15000);
-          try {
-            const response = await ai.models.generateContent({
-              model: modelName,
-              contents: prompt,
-              config: {
-                responseMimeType: 'application/json',
-                temperature: 0.4,
-                maxOutputTokens: 2048,
-              },
-            });
-            return response.text || '';
-          } catch (err: unknown) {
-            const errMsg = (err as Error)?.message || '';
-            if (attempt === 1 && (errMsg.includes('503') || errMsg.includes('429'))) {
-              logger.warn('Gemini temporary spike (503/429), retrying in 2s...', { attempt, error: errMsg });
-              await new Promise((r) => setTimeout(r, 2000));
-            } else {
-              throw err;
+        let lastError: unknown = null;
+        for (const model of candidateModels) {
+          for (let attempt = 1; attempt <= 2; attempt++) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            try {
+              const response = await ai.models.generateContent({
+                model,
+                contents: prompt,
+                config: {
+                  responseMimeType: 'application/json',
+                  temperature: 0.4,
+                  maxOutputTokens: 2048,
+                },
+              });
+              if (response.text) {
+                return response.text;
+              }
+            } catch (err: unknown) {
+              lastError = err;
+              const errMsg = (err as Error)?.message || '';
+              if (attempt === 1 && (errMsg.includes('503') || errMsg.includes('429'))) {
+                logger.warn(`Gemini temporary spike on ${model}, retrying in 1.5s...`);
+                await new Promise((r) => setTimeout(r, 1500));
+              } else {
+                logger.warn(`Model ${model} failed, testing next candidate...`, { error: errMsg });
+                break;
+              }
+            } finally {
+              clearTimeout(timeout);
             }
-          } finally {
-            clearTimeout(timeout);
           }
         }
+        if (lastError) throw lastError;
         return '';
       };
 

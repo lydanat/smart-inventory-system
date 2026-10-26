@@ -251,7 +251,8 @@ async function runAITests() {
 
   if (apiKey) {
     try {
-      console.log(`Dispatching request to Google Gemini API (${process.env.GEMINI_MODEL || 'gemini-3.8-flash'})...`);
+      const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+      console.log(`Dispatching request to Google Gemini API (${modelName})...`);
       const ai = new GoogleGenAI({ apiKey });
       const prompt = buildTestPrompt(inputPayload);
 
@@ -259,7 +260,7 @@ async function runAITests() {
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
           const response = await ai.models.generateContent({
-            model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+            model: modelName,
             contents: prompt,
             config: {
               responseMimeType: 'application/json',

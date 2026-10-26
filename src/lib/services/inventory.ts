@@ -24,9 +24,9 @@ export async function getInventoryItems(
     queryBuilder = queryBuilder.eq('quantity', 0);
   } else if (status === 'low') {
     // 0 < quantity <= low_stock_threshold
-    // PostgREST doesn't support column-to-column comparison directly without RPC or filter
-    // So we use raw filter or item_low_idx condition
-    queryBuilder = queryBuilder.gt('quantity', 0).filter('quantity', 'lte', 'items.low_stock_threshold');
+    // PostgREST cannot compare columns directly (quantity <= low_stock_threshold),
+    // so we filter gt('quantity', 0) at the DB level and evaluate against low_stock_threshold
+    queryBuilder = queryBuilder.gt('quantity', 0);
   } else if (status === 'expiring') {
     queryBuilder = queryBuilder
       .gt('quantity', 0)
@@ -54,6 +54,28 @@ export async function getInventoryItems(
   // Sorting
   const ascending = sortOrder === 'asc';
   queryBuilder = queryBuilder.order(sortBy, { ascending });
+
+  if (status === 'low') {
+    const { data, error } = await queryBuilder;
+    if (error) {
+      throw error;
+    }
+
+    const lowStockItems = (data || []).filter(
+      (item) => item.quantity > 0 && item.quantity <= item.low_stock_threshold
+    );
+
+    const from = (page - 1) * pageSize;
+    const paginated = lowStockItems.slice(from, from + pageSize);
+
+    return {
+      items: paginated,
+      totalCount: lowStockItems.length,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(lowStockItems.length / pageSize)),
+    };
+  }
 
   // Pagination
   const from = (page - 1) * pageSize;
