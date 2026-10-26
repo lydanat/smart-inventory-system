@@ -114,7 +114,12 @@ SCHEMA:
       "targetItemNames": string[], // MUST be real item names from DATA
       "idea": string,             // 1-2 sentences explaining the specific marketing angle (e.g., pair with sides for 15% off, 48-hour flash discount, double loyalty points)
       "channel": "in-store sign" | "social media" | "sms" | "telegram broadcast", // Vary channels across items!
-      "sampleMessage": string      // Actionable, copy-paste ready promotional message under 200 chars with engaging retail hook & emojis
+      "sampleMessage": string,     // Short promotional message under 200 chars
+      "promoBadge": string,       // Visual discount badge text (e.g., "20% OFF", "BUY 1 GET 1 50% OFF", "BUNDLE DEAL")
+      "posterHeadline": string,   // Punchy headline for visual flyer poster (e.g., "WEEKEND FLASH SALE", "CHEF'S PAIRING SPECIAL")
+      "callToAction": string,     // Compelling CTA (e.g., "Visit in-store today or DM us to reserve!", "Show this post at checkout!")
+      "facebookCaption": string,  // Full, formatted ready-to-publish Facebook post with emojis, value hook, detailed offer terms, store visit CTA, and 3-5 hashtags! Ready to copy-paste straight into Facebook.
+      "hashtags": string[]        // 3-5 hashtags (e.g., ["#WeekendSale", "#GroceryDeals", "#ShopLocal"])
     }
   ],
   "restock": [                    // 0-3 items, ONLY for low_stock/out_of_stock/fast_mover flags
@@ -211,6 +216,13 @@ export function generateRulesFallback(
       sampleMessage: hasExpiring
         ? `Freshness Special: Take 25% off ${item1} today only! Grab top quality at our lowest price.`
         : `Pair & Save: Buy ${item1} today and enjoy 15% off any complementary pairing item!`,
+      promoBadge: hasExpiring ? 'SAVE 25%' : 'BUNDLE DEAL',
+      posterHeadline: hasExpiring ? 'FRESHNESS CLEARANCE SALE' : 'CHEF’S PAIRING SPECIAL',
+      callToAction: 'Visit in-store today while supplies last!',
+      facebookCaption: hasExpiring
+        ? `🌿 FRESHNESS SPECIAL: 25% OFF ${item1.toUpperCase()}! 🌿\n\nStock up on premium fresh quality before our new batch arrives. Enjoy 25% off ${item1} all day today!\n\n📍 Visit us in-store today or message our page to reserve yours now.\n\n#FreshDeals #SpecialDiscount #${item1.replace(/\s+/g, '')} #ShopLocal`
+        : `🍽️ PAIR & SAVE COMBO DEAL! 🍽️\n\nDinner made simple! Grab ${item1} today and enjoy 15% off any complementary pairing item at checkout. Quality food, unbeatable value.\n\n📍 Stop by our store today or send us a message!\n\n#DinnerIdeas #ComboDeal #FoodLovers #ShopLocal`,
+      hashtags: ['#SpecialOffer', '#ShopLocal', '#GrocerySavings', `#${item1.replace(/[^a-zA-Z0-9]/g, '')}`],
     },
     {
       title: 'Weekend Flash Special',
@@ -218,6 +230,11 @@ export function generateRulesFallback(
       idea: `Drive urgent store traffic and accelerate stock velocity with a limited-time 20% flash promotion on ${item2}.`,
       channel: 'social media' as const,
       sampleMessage: `⚡ Flash Deal: Special 20% savings on ${item2} today for store followers! Limited quantities while supplies last.`,
+      promoBadge: '20% OFF',
+      posterHeadline: 'WEEKEND FLASH SALE',
+      callToAction: 'Show this post at checkout to claim!',
+      facebookCaption: `⚡ WEEKEND FLASH DEAL: 20% OFF ${item2.toUpperCase()}! ⚡\n\nAttention shoppers! For a limited time only, enjoy 20% off ${item2} when you shop with us this weekend.\n\n👉 Show this post at the register to claim your discount!\n⏳ Limited stock available — offer valid while supplies last.\n\n#FlashSale #WeekendSpecial #SaveBig #${item2.replace(/[^a-zA-Z0-9]/g, '')}`,
+      hashtags: ['#FlashSale', '#WeekendDeals', '#SuperSavings', `#${item2.replace(/[^a-zA-Z0-9]/g, '')}`],
     },
     {
       title: 'VIP Club Member Perk',
@@ -225,6 +242,11 @@ export function generateRulesFallback(
       idea: `Reward repeat loyal customers with exclusive bonus loyalty points or member pricing on ${item3}.`,
       channel: 'telegram broadcast' as const,
       sampleMessage: `⭐ VIP Exclusive: Double reward points on all purchases of ${item3} through tomorrow! Show this alert at the register.`,
+      promoBadge: 'VIP EXCLUSIVE',
+      posterHeadline: 'MEMBER REWARDS SPOTLIGHT',
+      callToAction: 'Mention your member ID at checkout!',
+      facebookCaption: `⭐ VIP CLUB EXCLUSIVE: DOUBLE REWARDS ON ${item3.toUpperCase()}! ⭐\n\nWe love our community! This week, earn double loyalty points and exclusive savings every time you pick up ${item3}.\n\n✨ Not a member yet? Sign up at checkout in under 30 seconds for free!\n\n#MemberPerks #VIPRewards #CustomerAppreciation #${item3.replace(/[^a-zA-Z0-9]/g, '')}`,
+      hashtags: ['#VIPRewards', '#CustomerAppreciation', '#ExclusiveDeals', `#${item3.replace(/[^a-zA-Z0-9]/g, '')}`],
     },
   ];
 

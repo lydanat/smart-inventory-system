@@ -31,7 +31,9 @@ import {
   Sparkles,
   Layers,
   ArrowRight,
+  Share2,
 } from 'lucide-react';
+import { SocialCampaignDialog } from '@/components/dashboard/social-campaign-dialog';
 import type { AIRecommendationRecord } from '@/lib/services/ai';
 import type {
   RecommendationPayload,
@@ -52,14 +54,21 @@ interface CatalogItemMap {
 interface AIInsightsCardProps {
   initialData: AIRecommendationRecord | null;
   itemsCatalog?: CatalogItemMap;
+  businessName?: string;
 }
 
-export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCardProps) {
+export function AIInsightsCard({
+  initialData,
+  itemsCatalog = {},
+  businessName = 'Smart Inventory',
+}: AIInsightsCardProps) {
   const [data, setData] = React.useState<AIRecommendationRecord | null>(initialData);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [copiedIndex, setCopiedIndex] = React.useState<number | null>(null);
   const [votedItems, setVotedItems] = React.useState<Record<string, 'up' | 'down'>>({});
   const [workflowOpen, setWorkflowOpen] = React.useState(false);
+  const [selectedCampaign, setSelectedCampaign] = React.useState<MarketingItem | null>(null);
+  const [campaignDialogOpen, setCampaignDialogOpen] = React.useState(false);
 
   // Restock dialog state
   const [restockItem, setRestockItem] = React.useState<{
@@ -341,9 +350,16 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
                         <span className="font-semibold text-xs sm:text-sm text-foreground">
                           {promo.title}
                         </span>
-                        <Badge variant="outline" className="text-[10px] capitalize shrink-0">
-                          {promo.channel}
-                        </Badge>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {promo.promoBadge && (
+                            <Badge className="text-[10px] bg-purple-600/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800">
+                              {promo.promoBadge}
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-[10px] capitalize">
+                            {promo.channel}
+                          </Badge>
+                        </div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                         {promo.idea}
@@ -354,16 +370,30 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        className="h-7 text-[11px] font-medium gap-1"
-                        onClick={() => handleCopyMessage(promo.sampleMessage, idx)}
-                      >
-                        {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                        <span>{isCopied ? 'Copied' : 'Copy Message'}</span>
-                      </Button>
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40 gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          size="xs"
+                          className="h-7 text-[11px] font-semibold gap-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
+                          onClick={() => {
+                            setSelectedCampaign(promo);
+                            setCampaignDialogOpen(true);
+                          }}
+                        >
+                          <Share2 className="w-3 h-3" />
+                          <span>Post &amp; Poster</span>
+                        </Button>
+
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          className="h-7 text-[11px] font-medium gap-1"
+                          onClick={() => handleCopyMessage(promo.sampleMessage, idx)}
+                        >
+                          {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          <span className="hidden sm:inline">{isCopied ? 'Copied' : 'Copy'}</span>
+                        </Button>
+                      </div>
 
                       <div className="flex items-center gap-1">
                         <Button
@@ -485,6 +515,14 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
           setDialogOpen(false);
           toast.success(`Successfully recorded restock for ${restockItem?.name}`);
         }}
+      />
+
+      {/* Social Campaign Dialog for 1-Click Facebook Post & Visual Poster */}
+      <SocialCampaignDialog
+        open={campaignDialogOpen}
+        onOpenChange={setCampaignDialogOpen}
+        campaign={selectedCampaign}
+        businessName={businessName}
       />
 
       {/* AI Workflow & Architecture Explanation Dialog */}

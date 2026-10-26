@@ -10,13 +10,18 @@ interface AIInsightsWrapperProps {
 export async function AIInsightsWrapper({ businessId }: AIInsightsWrapperProps) {
   const supabase = await createClient();
 
-  // Fetch recommendations and catalog items for quick restock lookup
-  const [recommendations, itemsRes] = await Promise.all([
+  // Fetch recommendations, catalog items, and business profile
+  const [recommendations, itemsRes, businessRes] = await Promise.all([
     getOrGenerateRecommendations(businessId).catch(() => null),
     supabase
       .from('items')
       .select('id, name, quantity, unit')
       .eq('business_id', businessId),
+    supabase
+      .from('businesses')
+      .select('name')
+      .eq('id', businessId)
+      .maybeSingle(),
   ]);
 
   const itemsCatalog: Record<string, { id: string; name: string; quantity: number; unit: string }> = {};
@@ -29,7 +34,13 @@ export async function AIInsightsWrapper({ businessId }: AIInsightsWrapperProps) 
     };
   }
 
-  return <AIInsightsCard initialData={recommendations} itemsCatalog={itemsCatalog} />;
+  return (
+    <AIInsightsCard
+      initialData={recommendations}
+      itemsCatalog={itemsCatalog}
+      businessName={businessRes.data?.name || 'Smart Inventory'}
+    />
+  );
 }
 
 export function AIInsightsSkeleton() {

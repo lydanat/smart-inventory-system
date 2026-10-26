@@ -1,14 +1,17 @@
 import { z } from 'zod';
 
-export const marketingItemSchema = z
-  .object({
-    title: z.string().min(1).max(120),
-    targetItemNames: z.array(z.string().min(1)).min(1).max(5),
-    idea: z.string().min(1).max(300),
-    channel: z.enum(['in-store sign', 'social media', 'sms', 'telegram broadcast']),
-    sampleMessage: z.string().min(1).max(250),
-  })
-  .strict();
+export const marketingItemSchema = z.object({
+  title: z.string().min(1).max(120),
+  targetItemNames: z.array(z.string().min(1)).min(1).max(5),
+  idea: z.string().min(1).max(300),
+  channel: z.enum(['in-store sign', 'social media', 'sms', 'telegram broadcast']),
+  sampleMessage: z.string().min(1).max(350),
+  facebookCaption: z.string().max(1500).optional(),
+  promoBadge: z.string().max(60).optional(),
+  posterHeadline: z.string().max(100).optional(),
+  callToAction: z.string().max(120).optional(),
+  hashtags: z.array(z.string()).optional(),
+});
 
 export const restockItemSchema = z
   .object({
