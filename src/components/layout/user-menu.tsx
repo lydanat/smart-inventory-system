@@ -25,7 +25,13 @@ export function UserMenu({ businessName, email, role }: UserMenuProps) {
 
   const handleSignOut = () => {
     startTransition(async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch {}
       await signOutAction();
+      window.location.href = '/login';
     });
   };
 

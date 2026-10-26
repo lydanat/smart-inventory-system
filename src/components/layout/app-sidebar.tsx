@@ -82,7 +82,7 @@ export function SidebarNavContent({
       </div>
 
       {/* Nav List */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav id="tour-sidebar-nav" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -91,6 +91,7 @@ export function SidebarNavContent({
           return (
             <Link
               key={item.href}
+              id={`tour-nav-${item.title.toLowerCase()}`}
               href={item.href}
               onClick={onItemClick}
               className={cn(

@@ -20,7 +20,7 @@ export function StatCards({ summary }: StatCardsProps) {
   const lowStockTotal = summary.low_stock_count + summary.out_of_stock_count;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div id="tour-stat-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* 1. Total SKUs */}
       <Link href="/inventory" className="group block focus:outline-none">
         <Card className="hover:border-primary/50 transition-all hover:shadow-xs">

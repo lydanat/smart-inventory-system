@@ -324,6 +324,49 @@ export function ItemDialog({
               </div>
             </div>
 
+            {/* Pricing: Selling Price & Wholesale Cost */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="space-y-1.5">
+                <Label htmlFor="price" className="text-xs font-medium">
+                  Retail Price ($) <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="0.00"
+                  disabled={isPending}
+                  className="rounded-lg"
+                  {...register('price', { valueAsNumber: true })}
+                />
+                {errors.price && (
+                  <p className="text-xs text-destructive font-medium">{errors.price.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="costPrice" className="text-xs font-medium">
+                  Cost / Wholesale Price ($)
+                </Label>
+                <Input
+                  id="costPrice"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="0.00 (optional)"
+                  disabled={isPending}
+                  className="rounded-lg"
+                  {...register('costPrice', {
+                    setValueAs: (v) => (v === '' || isNaN(v) ? null : Number(v)),
+                  })}
+                />
+                {errors.costPrice && (
+                  <p className="text-xs text-destructive font-medium">{errors.costPrice.message}</p>
+                )}
+              </div>
+            </div>
+
             {/* Supplier */}
             <div className="space-y-1.5">
               <Label htmlFor="supplierId" className="text-xs font-medium">Linked Supplier</Label>

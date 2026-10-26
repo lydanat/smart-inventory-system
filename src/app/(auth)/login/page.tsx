@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { BrandLogo } from '@/components/ui/brand-logo';
-import { Loader2, AlertCircle, ShieldCheck, Mail, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, Mail, CheckCircle2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -69,6 +69,7 @@ function LoginForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -289,6 +290,27 @@ function LoginForm() {
                 'Continue'
               )}
             </Button>
+
+            {/* Quick Demo Admin Login for Evaluators & Testing */}
+            <div className="pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setValue('email', 'admin@smartinventory.com');
+                  setValue('password', 'AdminPassword123!');
+                  onSubmitPassword({
+                    email: 'admin@smartinventory.com',
+                    password: 'AdminPassword123!',
+                  });
+                }}
+                disabled={isPending}
+                className="w-full h-10 rounded-lg text-xs font-semibold border-dashed border-primary/50 text-primary hover:bg-primary/5 gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span>One-Click Demo Store (16 items, 4 vendors)</span>
+              </Button>
+            </div>
           </form>
 
           {/* Footer Navigation */}

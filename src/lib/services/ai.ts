@@ -279,7 +279,7 @@ export async function getOrGenerateRecommendations(
     return cached as AIRecommendationRecord;
   }
 
-  // 2. If force refresh requested, check if at least 1 hour has elapsed since last generation
+  // 2. If force refresh requested, check if at least 15 minutes have elapsed since last generation
   if (options.forceRefresh) {
     const { data: latestRecord } = await supabase
       .from('ai_recommendations')
@@ -291,11 +291,11 @@ export async function getOrGenerateRecommendations(
 
     if (latestRecord?.generated_at) {
       const elapsedMs = Date.now() - new Date(latestRecord.generated_at).getTime();
-      const oneHourMs = 60 * 60 * 1000;
-      if (elapsedMs < oneHourMs) {
-        const remainingMins = Math.ceil((oneHourMs - elapsedMs) / (60 * 1000));
+      const fifteenMinsMs = 15 * 60 * 1000;
+      if (elapsedMs < fifteenMinsMs) {
+        const remainingMins = Math.ceil((fifteenMinsMs - elapsedMs) / (60 * 1000));
         throw new AppError(
-          `AI insights can be refreshed once per hour. You can refresh again in ${remainingMins} minute${remainingMins === 1 ? '' : 's'}.`,
+          `AI insights can be refreshed once every 15 minutes. You can refresh again in ${remainingMins} minute${remainingMins === 1 ? '' : 's'}.`,
           'RATE_LIMITED',
           429
         );
@@ -452,8 +452,14 @@ export async function getOrGenerateRecommendations(
     }
   }
 
-  // 8. Store in ai_recommendations via admin client (1 hour expiry)
-  const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString();
+  // Ensure at least 2-3 marketing clearance strategies are always provided
+  if (!payload.marketing || payload.marketing.length === 0) {
+    const fallbackMarketing = generateRulesFallback(flags, businessContext, items);
+    payload.marketing = fallbackMarketing.marketing;
+  }
+
+  // 8. Store in ai_recommendations via admin client (15 minutes expiry)
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from('ai_recommendations')
     .insert({

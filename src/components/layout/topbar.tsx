@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { UserMenu } from '@/components/layout/user-menu';
 import { MobileNavDrawer } from '@/components/layout/app-sidebar';
-import { SystemTour } from '@/components/tour/system-tour';
+import { InteractiveTour } from '@/components/tour/interactive-tour';
 import { Button } from '@/components/ui/button';
 import { Compass } from 'lucide-react';
 
@@ -25,21 +25,6 @@ const pageTitles: Record<string, string> = {
 
 export function Topbar({ businessName, email, role }: TopbarProps) {
   const pathname = usePathname();
-  const [tourOpen, setTourOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    const handleOpen = () => setTourOpen(true);
-    window.addEventListener('open-system-tour', handleOpen);
-
-    // Auto-open if query param ?tour=true is present
-    if (typeof window !== 'undefined' && window.location.search.includes('tour=true')) {
-      setTourOpen(true);
-    }
-
-    return () => {
-      window.removeEventListener('open-system-tour', handleOpen);
-    };
-  }, []);
   
   // Find matching title or default
   let currentTitle = 'Smart Inventory';
@@ -49,6 +34,10 @@ export function Topbar({ businessName, email, role }: TopbarProps) {
       break;
     }
   }
+
+  const handleStartTour = () => {
+    window.dispatchEvent(new CustomEvent('open-system-tour'));
+  };
 
   return (
     <>
@@ -67,8 +56,8 @@ export function Topbar({ businessName, email, role }: TopbarProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setTourOpen(true)}
-            className="h-8 gap-1.5 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/10 shadow-xs"
+            onClick={handleStartTour}
+            className="h-8 gap-1.5 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/10 shadow-xs cursor-pointer"
             title="Interactive Guided Tour of the Smart Inventory System"
           >
             <Compass className="w-4 h-4 text-primary" />
@@ -80,8 +69,8 @@ export function Topbar({ businessName, email, role }: TopbarProps) {
         </div>
       </header>
 
-      {/* Interactive System Tour Modal */}
-      <SystemTour open={tourOpen} onOpenChange={setTourOpen} />
+      {/* Real Interactive Spotlight System Tour */}
+      <InteractiveTour />
     </>
   );
 }

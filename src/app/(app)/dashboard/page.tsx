@@ -16,7 +16,6 @@ import { AIInsightsWrapper, AIInsightsSkeleton } from '@/components/dashboard/ai
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle } from 'lucide-react';
-import { TakeTourButton } from '@/components/tour/take-tour-button';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -62,8 +61,7 @@ export default async function DashboardPage() {
             Real-time stock health, automated safety rules, and daily movement activity.
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
-          <TakeTourButton />
+        <div className="flex items-center gap-2">
           <Button asChild size="sm" className="gap-1.5 font-semibold">
             <Link href="/inventory">
               <PlusCircle className="w-4 h-4" />

@@ -169,7 +169,7 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
     : 'Recently';
 
   return (
-    <Card className="border border-border/80 shadow-sm overflow-hidden bg-gradient-to-b from-card via-card to-card/90">
+    <Card id="tour-ai-advisor" className="border border-border/80 shadow-sm overflow-hidden bg-gradient-to-b from-card via-card to-card/90">
       {/* Header with Source Badge and Refresh Button */}
       <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
         <div className="flex flex-wrap items-center justify-between gap-3">

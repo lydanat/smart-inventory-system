@@ -179,7 +179,7 @@ export function ItemsTable({
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
+        <form id="tour-search-bar" onSubmit={handleSearchSubmit} className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             ref={searchInputRef}
@@ -237,6 +237,7 @@ export function ItemsTable({
 
           {/* Manage Categories Button */}
           <Button
+            id="tour-categories-btn"
             variant="outline"
             onClick={() => setCategoryDialogOpen(true)}
             size="sm"
@@ -249,6 +250,7 @@ export function ItemsTable({
 
           {/* Import XLSX / CSV Button */}
           <Button
+            id="tour-import-btn"
             variant="outline"
             onClick={() => setImportDialogOpen(true)}
             size="sm"
@@ -261,6 +263,7 @@ export function ItemsTable({
 
           {/* Add Item Button */}
           <Button
+            id="tour-add-item-btn"
             onClick={() => {
               setEditingItem(null);
               setSheetOpen(true);
