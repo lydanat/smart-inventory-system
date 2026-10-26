@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { updateStoreSettingsAction } from '@/actions/settings';
-import { signOutAction } from '@/actions/auth';
+import { signOutAction, updatePasswordAction } from '@/actions/auth';
 import { toast } from 'sonner';
 import {
   Store,
@@ -74,6 +74,9 @@ const TIMEZONES = [
 export function SettingsView({ business, userRole, userEmail }: SettingsViewProps) {
   const [isPending, startTransition] = React.useTransition();
   const [isSigningOut, startSignOut] = React.useTransition();
+  const [newPassword, setNewPassword] = React.useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = React.useState('');
+  const [isChangingPassword, startPasswordChange] = React.useTransition();
 
   const {
     register,
@@ -225,6 +228,87 @@ export function SettingsView({ business, userRole, userEmail }: SettingsViewProp
                 {userRole}
               </Badge>
             </div>
+          </div>
+
+          {/* Set / Change Password Section for Email & Google OAuth users */}
+          <div className="p-4 rounded-lg border border-border/60 bg-card space-y-3">
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Set or Update Password</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Logged in with Google? Setting a password lets you log in via either Google or your email & password anytime.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newPassword.length < 8) {
+                  toast.error('Password must be at least 8 characters');
+                  return;
+                }
+                if (newPassword !== confirmNewPassword) {
+                  toast.error('Passwords do not match');
+                  return;
+                }
+                startPasswordChange(async () => {
+                  const res = await updatePasswordAction({
+                    password: newPassword,
+                    confirmPassword: confirmNewPassword,
+                  });
+                  if (res.ok) {
+                    toast.success('Password updated successfully!');
+                    setNewPassword('');
+                    setConfirmNewPassword('');
+                  } else {
+                    toast.error(res.error.message);
+                  }
+                });
+              }}
+              className="space-y-3 pt-1"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="settings-new-pass" className="text-xs font-medium">New Password</Label>
+                  <Input
+                    id="settings-new-pass"
+                    type="password"
+                    placeholder="Min 8 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isChangingPassword}
+                    className="h-9 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="settings-confirm-pass" className="text-xs font-medium">Confirm Password</Label>
+                  <Input
+                    id="settings-confirm-pass"
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    disabled={isChangingPassword}
+                    className="h-9 text-xs"
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isChangingPassword || !newPassword}
+                className="text-xs h-8 font-medium"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Save Password'
+                )}
+              </Button>
+            </form>
           </div>
         </CardContent>
 

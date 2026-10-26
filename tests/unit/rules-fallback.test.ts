@@ -64,7 +64,8 @@ describe('AI Rules Fallback & Prompt Construction', () => {
     expect(fallback.restock.length).toBe(1);
     expect(fallback.restock[0].itemName).toBe('Organic Milk 1L');
     expect(fallback.restock[0].urgency).toBe('today');
-    expect(fallback.marketing.length).toBe(2);
+    expect(fallback.marketing.length).toBeGreaterThanOrEqual(2);
+    expect(fallback.marketing.length).toBeLessThanOrEqual(3);
     expect(fallback.marketing[0].targetItemNames).toContain('Artisan Sourdough');
     expect(fallback.suppliers.length).toBeGreaterThanOrEqual(1);
   });

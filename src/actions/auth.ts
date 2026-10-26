@@ -1,7 +1,12 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { signupSchema, loginSchema } from '@/lib/validation/auth';
+import {
+  signupSchema,
+  loginSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
+} from '@/lib/validation/auth';
 import type { ActionResult } from '@/lib/security/action-wrapper';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { headers } from 'next/headers';
@@ -219,3 +224,108 @@ export async function signOutAction(): Promise<void> {
   await supabase.auth.signOut();
   redirect('/login');
 }
+
+export async function requestPasswordResetAction(
+  rawInput: unknown
+): Promise<ActionResult<{ success: boolean; message: string }>> {
+  try {
+    const parsed = requestPasswordResetSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Please enter a valid email address.',
+        },
+      };
+    }
+
+    const { email } = parsed.data;
+    const headerList = await headers();
+    const host = headerList.get('host') || 'localhost:3000';
+    const protocol = headerList.get('x-forwarded-proto') || 'http';
+    const origin = `${protocol}://${host}`;
+    const redirectTo = `${origin}/auth/callback?next=/reset-password`;
+
+    const supabase = await createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: {
+          code: 'BAD_REQUEST',
+          message: error.message || 'Failed to send password reset email.',
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        success: true,
+        message: 'Password reset link sent! Please check your inbox.',
+      },
+    };
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string };
+    return {
+      ok: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: errorObj?.message || 'Failed to request password reset.',
+      },
+    };
+  }
+}
+
+export async function updatePasswordAction(
+  rawInput: unknown
+): Promise<ActionResult<{ success: boolean; redirect: string }>> {
+  try {
+    const parsed = resetPasswordSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return {
+        ok: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: parsed.error.issues[0]?.message || 'Invalid password format.',
+        },
+      };
+    }
+
+    const { password } = parsed.data;
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      return {
+        ok: false,
+        error: {
+          code: 'BAD_REQUEST',
+          message: error.message || 'Failed to update password.',
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      data: {
+        success: true,
+        redirect: '/dashboard',
+      },
+    };
+  } catch (err: unknown) {
+    const errorObj = err as { message?: string };
+    return {
+      ok: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: errorObj?.message || 'Failed to update password.',
+      },
+    };
+  }
+}
+

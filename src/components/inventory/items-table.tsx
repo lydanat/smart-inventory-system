@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { StatusBadge } from '@/components/inventory/status-badge';
 import { StockAdjustDialog } from '@/components/inventory/stock-adjust-dialog';
 import { ItemDialog } from '@/components/inventory/item-dialog';
+import { CategoryDialog } from '@/components/inventory/category-dialog';
+import { ImportDialog } from '@/components/inventory/import-dialog';
 import { archiveItemAction, restoreItemAction } from '@/actions/items';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import {
@@ -47,6 +49,8 @@ import {
   Minus,
   RefreshCw,
   ShoppingBag,
+  Tag,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -94,6 +98,13 @@ export function ItemsTable({
   // Sheet & Dialog state
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState<Item | null>(null);
+  const [categoryDialogOpen, setCategoryDialogOpen] = React.useState(false);
+  const [importDialogOpen, setImportDialogOpen] = React.useState(false);
+  const [activeCategories, setActiveCategories] = React.useState<string[]>(categories);
+
+  React.useEffect(() => {
+    setActiveCategories(categories);
+  }, [categories]);
 
   const [adjustDialogOpen, setAdjustDialogOpen] = React.useState(false);
   const [adjustingItem, setAdjustingItem] = React.useState<Item | null>(null);
@@ -216,13 +227,37 @@ export function ItemsTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
+              {activeCategories.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+
+          {/* Manage Categories Button */}
+          <Button
+            variant="outline"
+            onClick={() => setCategoryDialogOpen(true)}
+            size="sm"
+            className="gap-1.5 h-9 font-medium"
+            title="Create and manage product categories"
+          >
+            <Tag className="w-4 h-4 text-primary" />
+            <span className="hidden sm:inline">Categories</span>
+          </Button>
+
+          {/* Import XLSX / CSV Button */}
+          <Button
+            variant="outline"
+            onClick={() => setImportDialogOpen(true)}
+            size="sm"
+            className="gap-1.5 h-9 font-medium"
+            title="Import products from Excel (.xlsx) or CSV"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="hidden sm:inline">Import</span>
+          </Button>
 
           {/* Add Item Button */}
           <Button
@@ -527,6 +562,22 @@ export function ItemsTable({
         onOpenChange={setSheetOpen}
         item={editingItem}
         suppliers={suppliers}
+        categories={activeCategories}
+        onSuccess={() => router.refresh()}
+      />
+
+      {/* Category Management Dialog */}
+      <CategoryDialog
+        open={categoryDialogOpen}
+        onOpenChange={setCategoryDialogOpen}
+        categories={activeCategories}
+        onCategoriesChange={(updated) => setActiveCategories(updated)}
+      />
+
+      {/* Product Spreadsheet Import Dialog (Excel & CSV) */}
+      <ImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
         onSuccess={() => router.refresh()}
       />
 

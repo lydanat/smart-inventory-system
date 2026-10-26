@@ -52,6 +52,7 @@ export interface ItemDialogProps {
   onOpenChange: (open: boolean) => void;
   item?: ItemDialogItem | null;
   suppliers: SupplierOption[];
+  categories?: string[];
   onSuccess?: () => void;
 }
 
@@ -60,15 +61,18 @@ export function ItemDialog({
   onOpenChange,
   item,
   suppliers,
+  categories = [],
   onSuccess,
 }: ItemDialogProps) {
   const isEditing = Boolean(item?.id);
   const [isPending, startTransition] = React.useTransition();
+  const [isCustomCategory, setIsCustomCategory] = React.useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     reset,
     formState: { errors },
   } = useForm({
@@ -216,16 +220,64 @@ export function ItemDialog({
 
             {/* Category */}
             <div className="space-y-1.5">
-              <Label htmlFor="category" className="text-xs font-medium">Category</Label>
-              <Input
-                id="category"
-                placeholder="e.g. Bakery, Beverages, Dairy"
-                disabled={isPending}
-                className="rounded-lg"
-                {...register('category')}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="category" className="text-xs font-medium">Category</Label>
+                {categories.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomCategory(!isCustomCategory);
+                      if (!isCustomCategory) {
+                        setValue('category', '');
+                      }
+                    }}
+                    className="text-[11px] text-primary hover:underline cursor-pointer"
+                  >
+                    {isCustomCategory ? 'Choose from list' : '+ New category'}
+                  </button>
+                )}
+              </div>
+
+              {isCustomCategory || categories.length === 0 ? (
+                <Input
+                  id="category"
+                  placeholder="e.g. Bakery, Beverages, Dairy"
+                  disabled={isPending}
+                  className="rounded-lg h-9 text-xs"
+                  {...register('category')}
+                  autoFocus={isCustomCategory}
+                />
+              ) : (
+                <Select
+                  value={watch('category') || ''}
+                  onValueChange={(val) => {
+                    if (val === '__new__') {
+                      setIsCustomCategory(true);
+                      setValue('category', '');
+                    } else {
+                      setValue('category', val);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-9 rounded-lg text-xs">
+                    <SelectValue placeholder="Select or type a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c} value={c} className="text-xs">
+                        {c}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="__new__" className="text-xs text-primary font-medium">
+                      + Create new category...
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               {errors.category && (
-                <p className="text-xs text-destructive font-medium">{errors.category.message}</p>
+                <p className="text-xs text-destructive font-medium">
+                  {typeof errors.category.message === 'string' ? errors.category.message : 'Category is required'}
+                </p>
               )}
             </div>
 

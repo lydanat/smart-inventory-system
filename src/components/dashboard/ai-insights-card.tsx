@@ -8,6 +8,13 @@ import { StockAdjustDialog } from '@/components/inventory/stock-adjust-dialog';
 import { refreshRecommendationsAction, recordFeedbackAction } from '@/actions/ai';
 import { toast } from 'sonner';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Cpu,
   RefreshCw,
   Copy,
@@ -20,6 +27,10 @@ import {
   ShieldCheck,
   Clock,
   ExternalLink,
+  HelpCircle,
+  Sparkles,
+  Layers,
+  ArrowRight,
 } from 'lucide-react';
 import type { AIRecommendationRecord } from '@/lib/services/ai';
 import type {
@@ -48,6 +59,7 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [copiedIndex, setCopiedIndex] = React.useState<number | null>(null);
   const [votedItems, setVotedItems] = React.useState<Record<string, 'up' | 'down'>>({});
+  const [workflowOpen, setWorkflowOpen] = React.useState(false);
 
   // Restock dialog state
   const [restockItem, setRestockItem] = React.useState<{
@@ -192,16 +204,30 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="text-xs h-8 gap-1.5 shadow-xs hover:bg-accent"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{isRefreshing ? 'Analyzing...' : 'Refresh'}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setWorkflowOpen(true)}
+              className="text-xs h-8 gap-1.5 shadow-xs hover:bg-accent"
+              title="Learn how the AI pipeline and forecasting engine works"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+              <span>AI Workflow</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="text-xs h-8 gap-1.5 shadow-xs hover:bg-accent"
+              title="Refresh recommendations with latest inventory counts"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? 'Analyzing...' : 'Refresh'}</span>
+            </Button>
+          </div>
         </div>
 
         {/* Executive Summary */}
@@ -312,18 +338,18 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
                   >
                     <div>
                       <div className="flex items-start justify-between gap-1.5">
-                        <span className="font-semibold text-xs sm:text-sm text-foreground line-clamp-1">
+                        <span className="font-semibold text-xs sm:text-sm text-foreground">
                           {promo.title}
                         </span>
                         <Badge variant="outline" className="text-[10px] capitalize shrink-0">
                           {promo.channel}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                         {promo.idea}
                       </p>
 
-                      <div className="mt-2.5 p-2 rounded bg-muted/40 border border-border/30 text-[11px] font-mono text-foreground/90 line-clamp-2">
+                      <div className="mt-2.5 p-2.5 rounded bg-muted/40 border border-border/30 text-[11px] font-mono text-foreground/90 max-h-36 overflow-y-auto leading-relaxed scrollbar-thin">
                         &quot;{promo.sampleMessage}&quot;
                       </div>
                     </div>
@@ -460,6 +486,93 @@ export function AIInsightsCard({ initialData, itemsCatalog = {} }: AIInsightsCar
           toast.success(`Successfully recorded restock for ${restockItem?.name}`);
         }}
       />
+
+      {/* AI Workflow & Architecture Explanation Dialog */}
+      <Dialog open={workflowOpen} onOpenChange={setWorkflowOpen}>
+        <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <span>How the AI Workflow Operates</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              Smart Inventory combines deterministic inventory rules with Google Gemini 3.8 Flash for reliable, hallucination-free advice.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Step 1 */}
+            <div className="flex gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+              <div className="p-2 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0 h-fit">
+                <Layers className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <h5 className="text-xs font-semibold text-foreground">
+                  1. Deterministic Inventory Rules Engine
+                </h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Evaluates every SKU against 5 mathematical states: Out of Stock (0 units), Low Stock (≤ threshold), Expiring Soon (≤ 7 days), Fast Mover (high 30-day velocity), and Overstock / Slow Mover.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+              <div className="p-2 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 shrink-0 h-fit">
+                <Cpu className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <h5 className="text-xs font-semibold text-foreground">
+                  2. Google Gemini 3.8 Flash Synthesis
+                </h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The verified data payload is passed to Gemini via secure prompt encapsulation. Gemini produces prioritized restocks, <strong>2-3 targeted marketing clearance campaigns</strong> with ready-to-use message copy, and vendor sourcing tips.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+              <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 h-fit">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <h5 className="text-xs font-semibold text-foreground">
+                  3. Anti-Hallucination & Schema Validation
+                </h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Every product name in the AI output is cross-verified against your real store catalog using strict Zod schemas. Any made-up or hallucinated product is automatically discarded.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="flex gap-3 p-3 rounded-lg border border-border/60 bg-muted/20">
+              <div className="p-2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 h-fit">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <h5 className="text-xs font-semibold text-foreground">
+                  4. Hourly Auto-Refresh & Deterministic Fallback
+                </h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Insights stay cached for 1 hour to prevent API quota drain and refresh automatically. If Gemini is unreachable, our deterministic rule fallback steps in with zero downtime.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <Button
+              size="sm"
+              onClick={() => setWorkflowOpen(false)}
+              className="text-xs h-9"
+            >
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

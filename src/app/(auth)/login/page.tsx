@@ -7,13 +7,20 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@/lib/validation/auth';
-import { loginAction, getGoogleOAuthUrlAction } from '@/actions/auth';
+import { loginAction, getGoogleOAuthUrlAction, requestPasswordResetAction } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { BrandLogo } from '@/components/ui/brand-logo';
-import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Loader2, AlertCircle, ShieldCheck, Mail, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -84,6 +91,36 @@ function LoginForm() {
         router.refresh();
       }
     });
+  };
+
+  const [forgotOpen, setForgotOpen] = React.useState(false);
+  const [forgotEmail, setForgotEmail] = React.useState('');
+  const [forgotPending, setForgotPending] = React.useState(false);
+  const [forgotSent, setForgotSent] = React.useState(false);
+  const [forgotError, setForgotError] = React.useState<string | null>(null);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(null);
+    if (!forgotEmail || !forgotEmail.includes('@')) {
+      setForgotError('Please enter a valid email address');
+      return;
+    }
+    setForgotPending(true);
+    try {
+      const res = await requestPasswordResetAction({ email: forgotEmail });
+      if (!res.ok) {
+        setForgotError(res.error.message);
+        toast.error(res.error.message);
+      } else {
+        setForgotSent(true);
+        toast.success('Password reset link sent! Check your inbox.');
+      }
+    } catch {
+      setForgotError('An unexpected error occurred. Please try again.');
+    } finally {
+      setForgotPending(false);
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -226,10 +263,14 @@ function LoginForm() {
 
               <button
                 type="button"
-                onClick={() => toast.info('Please contact your store administrator to reset your password.')}
+                onClick={() => {
+                  setForgotOpen(true);
+                  setForgotSent(false);
+                  setForgotError(null);
+                }}
                 className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
               >
-                Forgot Password
+                Forgot Password?
               </button>
             </div>
 
@@ -265,6 +306,95 @@ function LoginForm() {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password & Google Account Password Setup Modal */}
+      <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              <span>Reset or Set Password</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              If you registered with Google or email, enter your email address to receive a secure link to create or update your password.
+            </DialogDescription>
+          </DialogHeader>
+
+          {forgotSent ? (
+            <div className="py-4 space-y-3 text-center animate-fade-in">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
+              <h4 className="text-sm font-semibold text-foreground">Reset Email Sent!</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                We sent a secure link to <strong className="text-foreground">{forgotEmail}</strong>. Click the link in your email to choose a new password.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setForgotOpen(false)}
+                className="w-full text-xs h-9 mt-2"
+              >
+                Close
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4 py-2">
+              {forgotError && (
+                <Alert variant="destructive" className="py-2 text-xs">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <AlertDescription className="text-xs">{forgotError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="forgot-email" className="text-xs font-medium">
+                  Account Email
+                </Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="your.email@gmail.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  disabled={forgotPending}
+                  className="h-10 text-xs sm:text-sm rounded-lg"
+                  autoFocus
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Works for both standard email accounts and Google OAuth users.
+                </p>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setForgotOpen(false)}
+                  disabled={forgotPending}
+                  className="text-xs h-9"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={forgotPending}
+                  className="text-xs h-9 gap-1.5"
+                >
+                  {forgotPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

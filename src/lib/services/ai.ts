@@ -15,6 +15,7 @@ import {
 import {
   parseRecommendation,
   type RecommendationPayload,
+  type MarketingItem,
 } from '@/lib/validation/ai';
 
 export type { RecommendationPayload };
@@ -107,7 +108,7 @@ Respond with ONLY valid JSON matching the schema below. No prose before or after
 SCHEMA:
 {
   "summary": string,              // 1-2 sentences, the single most important thing today
-  "marketing": [                  // 0-3 items, ONLY for overstock/slow_moving/expiring_soon flags
+  "marketing": [                  // MUST provide 2 to 3 practical marketing strategies! Prioritize overstock/slow_moving/expiring_soon items; if none, generate bundle, flash sale, or customer loyalty promotions using available items from DATA
     {
       "title": string,
       "targetItemNames": string[], // MUST be real item names from DATA
@@ -144,7 +145,8 @@ ${JSON.stringify(input, null, 2)}`;
  */
 export function generateRulesFallback(
   flags: RuleFlag[],
-  businessContext: BusinessContext
+  businessContext: BusinessContext,
+  allItems: RuleItem[] = []
 ): RecommendationPayload {
   const criticalCount = flags.filter((f) => f.severity === 'critical').length;
   const warningCount = flags.filter((f) => f.severity === 'warning').length;
@@ -174,16 +176,39 @@ export function generateRulesFallback(
   const promoCandidates = flags.filter((f) =>
     ['expiring_soon', 'overstock', 'slow_moving'].includes(f.flag)
   );
-  const marketing = promoCandidates.slice(0, 3).map((f) => ({
+  const marketing: MarketingItem[] = promoCandidates.slice(0, 3).map((f) => ({
     title: f.flag === 'expiring_soon' ? 'Freshness Clearance' : 'Inventory Promotion',
     targetItemNames: [f.itemName],
     idea:
       f.flag === 'expiring_soon'
         ? `Discount ${f.itemName} to sell before expiry date.`
         : `Run a featured promotion to accelerate turnover for ${f.itemName}.`,
-    channel: 'in-store sign' as const,
+    channel: 'in-store sign',
     sampleMessage: `Special offer on ${f.itemName}! Pick up yours today while supplies last.`,
   }));
+
+  // Ensure 2-3 marketing strategies are ALWAYS returned
+  const fallbackItem1 = allItems[0]?.name || flags[0]?.itemName || 'Featured Product';
+  if (marketing.length < 2) {
+    marketing.push({
+      title: 'Customer Loyalty Reward',
+      targetItemNames: [fallbackItem1],
+      idea: `Reward repeat customers with bonus loyalty points on ${fallbackItem1}.`,
+      channel: 'social media' as const,
+      sampleMessage: `Member Special: Enjoy exclusive rewards and double points on ${fallbackItem1} this week!`,
+    });
+  }
+
+  const fallbackItem2 = allItems[1]?.name || flags[1]?.itemName || fallbackItem1;
+  if (marketing.length < 3) {
+    marketing.push({
+      title: 'Weekend Flash Special',
+      targetItemNames: [fallbackItem2],
+      idea: `Drive weekend store traffic with a limited-time flash promotion on ${fallbackItem2}.`,
+      channel: 'telegram broadcast' as const,
+      sampleMessage: `⚡ Flash Deal: Special limited-time pricing on ${fallbackItem2} for store followers today!`,
+    });
+  }
 
   // Supplier tips from flags with linked or category suppliers
   const supplierCategories = Array.from(
@@ -236,15 +261,27 @@ export async function getOrGenerateRecommendations(
     return cached as AIRecommendationRecord;
   }
 
-  // 2. If force refresh requested, enforce 1 per hour rate limit
+  // 2. If force refresh requested, check if at least 1 hour has elapsed since last generation
   if (options.forceRefresh) {
-    const allowed = await checkRateLimit(`ai:business:${businessId}`, 1, '1 hour');
-    if (!allowed) {
-      throw new AppError(
-        'AI recommendations can be refreshed once per hour. Please try again later.',
-        'RATE_LIMITED',
-        429
-      );
+    const { data: latestRecord } = await supabase
+      .from('ai_recommendations')
+      .select('generated_at')
+      .eq('business_id', businessId)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestRecord?.generated_at) {
+      const elapsedMs = Date.now() - new Date(latestRecord.generated_at).getTime();
+      const oneHourMs = 60 * 60 * 1000;
+      if (elapsedMs < oneHourMs) {
+        const remainingMins = Math.ceil((oneHourMs - elapsedMs) / (60 * 1000));
+        throw new AppError(
+          `AI insights can be refreshed once per hour. You can refresh again in ${remainingMins} minute${remainingMins === 1 ? '' : 's'}.`,
+          'RATE_LIMITED',
+          429
+        );
+      }
     }
   }
 
@@ -325,7 +362,7 @@ export async function getOrGenerateRecommendations(
     if (!globalAllowed) {
       logger.warn('Global Gemini daily budget exhausted, falling back to rules_only');
     }
-    payload = generateRulesFallback(flags, businessContext);
+    payload = generateRulesFallback(flags, businessContext, items);
     source = 'rules_only';
   } else {
     // 7. Call Gemini via @google/genai SDK
@@ -381,13 +418,13 @@ export async function getOrGenerateRecommendations(
       logger.error('Gemini generation failed or timed out, falling back to rules_only', {
         error: (genErr as Error).message,
       });
-      payload = generateRulesFallback(flags, businessContext);
+      payload = generateRulesFallback(flags, businessContext, items);
       source = 'rules_only';
     }
   }
 
-  // 8. Store in ai_recommendations via admin client (6 hour expiry)
-  const expiresAt = new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+  // 8. Store in ai_recommendations via admin client (1 hour expiry)
+  const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString();
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from('ai_recommendations')
     .insert({

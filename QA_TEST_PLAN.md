@@ -1,153 +1,537 @@
-# Smart Inventory AI — Comprehensive QA Test Plan & Verification Matrix
+# Smart Inventory AI — Manual QA Test Plan & Verification Guide
 
-> **Excel Workbook:** An interactive, multi-tab Excel workbook with formatted test matrices, auto-filters, and priority badges is generated and available at:  
-> 📊 **[`SMART_INVENTORY_QA_TEST_CASES.xlsx`](file:///Users/lydana/Documents/T_tech/smart-inventory-web/SMART_INVENTORY_QA_TEST_CASES.xlsx)**
-
----
-
-## 1. Executive Summary & Scope
-
-| Attribute | Details |
-| :--- | :--- |
-| **Application** | Smart Inventory Web (Next.js 16 + Supabase Multi-Tenant RLS + Gemini AI) |
-| **Target URL** | `http://localhost:3000` / Production Staging |
-| **Total Automated Tests** | **61 / 61 Unit & Integration Tests (100% Pass Rate)** |
-| **Playwright E2E Tests** | **15 Verified Automated Scenarios** |
-| **Document Version** | `v1.2.0` — Release Candidate |
-| **Status** | **ALL TESTS PASSING** |
+> **Important Note for the Tester:**  
+> This test plan is specifically authored for **manual execution by YOU (the store owner/tester)**.  
+> Every test case includes exact step-by-step instructions, expected success outcomes, failure criteria to watch for, and a `[ ] PASS / [ ] FAIL` checkbox so you can record your findings.
 
 ---
 
-## 2. Test Execution Summary by Module
+## ⚠️ Prerequisite: Resuming Your Supabase Project ("Disconnect" Fix)
 
-| Module ID | Module / Feature Name | Total Tests | Automated | Manual / Exploratory | Pass Rate | Status |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| **AUTH** | Authentication, Onboarding & Multi-Tenant Routing | 12 | 10 | 2 | 100% | **PASS** |
-| **INV** | Inventory Catalog & SKU Management | 11 | 9 | 2 | 100% | **PASS** |
-| **STK** | Atomic Stock Adjustments & ACID Invariants | 6 | 6 | 0 | 100% | **PASS** |
-| **ALT** | Low Stock Alerts & Incident Lifecycle | 7 | 6 | 1 | 100% | **PASS** |
-| **TEL** | Automated Telegram Notifications & Webhooks | 7 | 7 | 0 | 100% | **PASS** |
-| **AI** | Gemini AI Insights & Fallback Forecasting | 4 | 4 | 0 | 100% | **PASS** |
-| **SEC** | Multi-Tenant RLS Security & Penetration Testing | 8 | 8 | 0 | 100% | **PASS** |
-| **UI** | 50/50 Split Layout, Responsive Design System | 7 | 5 | 2 | 100% | **PASS** |
-| **TOTAL** | **Entire Application Surface** | **62** | **55** | **7** | **100%** | **VERIFIED** |
+If your app displays connection errors, timeouts (curl error 28), or fails to load data, your Supabase hosted project is currently in a **PAUSED (inactive)** state. On the Supabase free tier, projects pause automatically after 7 days of inactivity.
 
----
+### How to Resume Your Supabase Project (2 Minutes):
+1. Navigate to: **[https://supabase.com/dashboard](https://supabase.com/dashboard)**
+2. Log in with your Supabase credentials or GitHub.
+3. In your project list, locate project reference: **`tgwboujyiexgpmsssmqd`**.
+4. You will see a yellow banner stating: *"This project is paused"*.
+5. Click the green **"Restore project" / "Resume"** button.
+6. Wait **1 to 2 minutes** while Supabase spins up the PostgreSQL container and REST API.
+7. Once the project status turns to a green dot **"Active"**, open the **SQL Editor** tab in Supabase.
+8. Paste and run the following migration to enable the dedicated categories table:
 
-## 3. Test Cases Matrix
+```sql
+-- Migration: Create categories table
+create table if not exists public.categories (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  name text not null check (char_length(btrim(name)) between 1 and 80),
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
 
-### Module 1: Authentication & Multi-Tenant Onboarding (AUTH)
+create index if not exists categories_business_idx on public.categories (business_id);
+alter table public.categories enable row level security;
 
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `AUTH-001` | Successful Registration | Critical | Functional | 1. Visit `/signup`<br>2. Fill Store Name, unique email, password >= 8 chars<br>3. Submit | Account created; redirected to `/dashboard` with tenant context. | **PASS** | [auth.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/auth.spec.ts) |
-| `AUTH-002` | Reject Password < 8 Chars | High | Validation | 1. Enter 7-char password on `/signup`<br>2. Attempt submit | Submission blocked by Zod client validation; live indicator shows requirement. | **PASS** | [validation.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/unit/validation.test.ts) |
-| `AUTH-003` | Reject Duplicate Email | High | Functional | 1. Enter already registered email on `/signup`<br>2. Submit | Destructive alert shown; duplicate creation rejected. | **PASS** | [otp-oauth.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/otp-oauth.test.ts) |
-| `AUTH-004` | Successful Email/Password Login | Critical | Functional | 1. Visit `/login`<br>2. Enter valid email/password<br>3. Submit | Session cookies set; redirected to `/dashboard`. | **PASS** | [auth.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/auth.spec.ts) |
-| `AUTH-005` | Reject Invalid Login Password | Critical | Security | 1. Visit `/login`<br>2. Enter wrong password<br>3. Submit | Red error alert shown; access denied. | **PASS** | [otp-oauth.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/otp-oauth.test.ts) |
-| `AUTH-006` | Route Guard on Protected URLs | Critical | Security | 1. Clear cookies<br>2. Visit `/dashboard`, `/inventory` | Proxy/middleware redirects unauthenticated user to `/login?next=...`. | **PASS** | [auth.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/auth.spec.ts) |
-| `AUTH-007` | Auth Pages Redirect Logged-In User | Medium | Functional | 1. With active session, visit `/login` or `/signup` | User redirected straight to `/dashboard`. | **PASS** | [auth.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/auth.spec.ts) |
-| `AUTH-008` | Google OAuth Redirection Flow | High | Integration | 1. Click "Continue with Google" | Returns valid `accounts.google.com` auth URL with secure state. | **PASS** | [otp-oauth.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/otp-oauth.test.ts) |
-| `AUTH-009` | Google OAuth Code Exchange | Critical | Integration | 1. OAuth provider returns code to `/auth/callback?code=...` | Server exchanges code for session, sets cookies, redirects to dashboard. | **PASS** | [otp-google-auth.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/otp-google-auth.spec.ts) |
-| `AUTH-010` | Sign Out Clears Session | High | Functional | 1. Click User Menu -> "Sign out" | Session invalidated; cookies cleared; redirects to `/login`. | **PASS** | [auth.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/auth.spec.ts) |
-| `AUTH-011` | Remember Me State | Low | UI/UX | 1. Toggle "Remember me" checkbox | Visual high-contrast check state toggles smoothly. | **PASS** | [login/page.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/app/(auth)/login/page.tsx) |
-| `AUTH-012` | Auth Rate Limiting | High | Security | 1. Send 15 failed logins within 10s | Endpoint returns HTTP 429 Too Many Requests. | **PASS** | [rate-limit.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/lib/security/rate-limit.ts) |
+create policy "categories_select" on public.categories for select using (public.is_member(business_id));
+create policy "categories_insert" on public.categories for insert with check (public.is_member(business_id));
+create policy "categories_update" on public.categories for update using (public.is_member(business_id));
+create policy "categories_delete" on public.categories for delete using (public.is_member(business_id, array['owner','manager']));
+```
 
----
-
-### Module 2: Inventory Catalog & SKU Management (INV)
-
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `INV-001` | Render Inventory Catalog Table | Critical | Functional | 1. Visit `/inventory` | Table lists tenant SKUs with category, quantity, threshold, and status badges. | **PASS** | [dashboard.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/dashboard.spec.ts) |
-| `INV-002` | Search Items by SKU Name | High | Functional | 1. Type "Organic Fuji" into search | Table filters live to matching item without reload. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `INV-003` | Filter Items by Category | Medium | Functional | 1. Select "Produce" in category dropdown | Table displays only Produce items. | **PASS** | [responsive-and-polish.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/responsive-and-polish.spec.ts) |
-| `INV-004` | Open Responsive Add Item Dialog | High | UI/UX | 1. Click "Add Item" button | Centered responsive dialog opens with `rounded-lg` styling. | **PASS** | [item-dialog.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/components/inventory/item-dialog.tsx) |
-| `INV-005` | Required Field Validation | High | Validation | 1. Submit empty Add Item dialog | Form highlights missing Name, Category, Unit, Quantity. | **PASS** | [validation.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/unit/validation.test.ts) |
-| `INV-006` | Create Item with Valid Data | Critical | Functional | 1. Fill Name: "Organic Fuji Apples", Qty: 25, Threshold: 5<br>2. Submit | Item saved in Supabase; modal closes; item appears in list; toast shown. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `INV-007` | Price Field Optional / Hidden | Medium | Functional | 1. Verify Price field is optional in Add Item dialog | Form submits cleanly without requiring price input. | **PASS** | [item-dialog.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/components/inventory/item-dialog.tsx) |
-| `INV-008` | Reject Negative Initial Quantity | Critical | Security | 1. Attempt to insert item with quantity: -5 | Database constraint `quantity >= 0` rejects insert. | **PASS** | [rls.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/rls.test.ts) |
-| `INV-009` | View Item Details & Audit Trail | Medium | Functional | 1. Click item name link in table | Opens `/inventory/[id]` with metadata and audit log. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `INV-010` | Edit Item Threshold | High | Functional | 1. Click "Edit Item"<br>2. Change threshold 5 -> 10<br>3. Save | Item updated in DB and reflected in UI immediately. | **PASS** | [inventory.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/actions/inventory.ts) |
-| `INV-011` | Delete Item with Confirmation | Medium | Functional | 1. Click "Delete Item"<br>2. Confirm in alert dialog | Item removed from DB; redirected to `/inventory`. | **PASS** | [inventory.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/actions/inventory.ts) |
+9. Refresh `http://localhost:3000/dashboard`. All features will now connect seamlessly!
 
 ---
 
-### Module 3: Stock Adjustments & Level Invariants (STK)
-
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `STK-001` | Quick Sale Action (-1) | Critical | Functional | 1. Click "Sale (-1)" on table row | Quantity decrements by 1; transaction logged. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `STK-002` | Quick Restock Action (+1) | High | Functional | 1. Click "+1" button on table row | Quantity increments by 1; transaction logged. | **PASS** | [inventory.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/actions/inventory.ts) |
-| `STK-003` | Custom Delta Adjustment | High | Functional | 1. Click Adjust Stock<br>2. Enter delta: -22<br>3. Save | Quantity updates (25 -> 3); modal closes; audit history logged. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `STK-004` | Reject Decrement Below 0 | Critical | Security | 1. Attempt adjustment of -10 when quantity is 3 | Atomic RPC rejects adjustment; error "Stock cannot drop below 0". | **PASS** | [rls.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/rls.test.ts) |
-| `STK-005` | Atomic Concurrency (Race Prevention) | Critical | Integration | 1. Send 10 concurrent -2 requests on item with 10 units | Exactly 5 succeed; stock stays at 0; no negative balances. | **PASS** | [rls.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/rls.test.ts) |
-| `STK-006` | Status Badge Dynamic Transitions | High | Functional | 1. Qty > threshold -> "In Stock"<br>2. Qty <= threshold -> "Low Stock"<br>3. Qty = 0 -> "Out of Stock" | Badge styling and text update automatically. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
+## 📋 Manual Test Execution Matrix
 
 ---
 
-### Module 4: Low Stock Alerts & Incident Lifecycle (ALT)
+### Module 1: Authentication, Google Login & Password Setup
 
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `ALT-001` | Incident Created on Stock Drop | Critical | Functional | 1. Adjust stock to 3 (threshold is 5) | Active low-stock incident record created. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `ALT-002` | Immediate Attention Dashboard List | High | UI/UX | 1. Visit `/dashboard` | Low-stock item appears in "Immediate Attention Needed" widget. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `ALT-003` | Render Full Alerts Log | High | Functional | 1. Visit `/alerts` | Renders active alerts with severity, timestamps, and SKU names. | **PASS** | [alerts/page.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/app/(app)/alerts/page.tsx) |
-| `ALT-004` | Acknowledge Alert | Medium | Functional | 1. Click "Acknowledge" on alert card | Status updates to acknowledged; unread counter decreases. | **PASS** | [alerts.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/actions/alerts.ts) |
-| `ALT-005` | Restock Automatically Resolves Alert | High | Functional | 1. Restock item from 3 to 23 units | Alert marked as RESOLVED; removed from Attention list. | **PASS** | [rules.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/unit/rules.test.ts) |
-| `ALT-006` | Expiry Date Cron API | Medium | Integration | 1. Trigger `GET /api/cron/expiry` with auth header | Flags items expiring within 7 days. | **PASS** | [expiry/route.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/app/api/cron/expiry/route.ts) |
-| `ALT-007` | Low Stock Reconciliation Cron | Medium | Integration | 1. Trigger `GET /api/cron/low-stock` with auth header | Reconciles missing alert incidents across all tenants. | **PASS** | [low-stock/route.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/app/api/cron/low-stock/route.ts) |
-
----
-
-### Module 5: Automated Telegram Notifications (TEL)
-
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `TEL-001` | Generate 6-Char Link Code | High | Functional | 1. In `/settings`, click "Generate Telegram Code" | Generates 6-char alphanumeric code with linking instructions. | **PASS** | [telegram.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/telegram.test.ts) |
-| `TEL-002` | Store Only SHA-256 Hash with 10m TTL | Critical | Security | 1. Inspect DB `telegram_link_codes` table | Raw code NEVER stored; only 64-char SHA-256 hash stored. | **PASS** | [telegram.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/telegram.test.ts) |
-| `TEL-003` | Webhook Links chat_id Atomically | Critical | Integration | 1. Telegram bot sends `/start <code>` webhook | HTTP 200; `chat_id` linked to business; welcome message sent. | **PASS** | [telegram.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/telegram.test.ts) |
-| `TEL-004` | Invalidate Link Code on First Use | Critical | Security | 1. Send second webhook with same code | Webhook rejects code; prevents replay attacks. | **PASS** | [telegram.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/telegram.test.ts) |
-| `TEL-005` | Reject Expired Link Codes | High | Security | 1. Send webhook with code created >10m ago | Webhook rejects code as expired. | **PASS** | [telegram.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/telegram.test.ts) |
-| `TEL-006` | Low Stock Dispatches Telegram Alert | Critical | Functional | 1. Reduce SKU quantity to or below threshold | Telegram message sent with SKU name, quantity, and restock link. | **PASS** | [service.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/lib/telegram/service.ts) |
-| `TEL-007` | Network Outage Resiliency | Medium | Reliability | 1. Simulate Telegram API timeout during low stock | Inventory transaction succeeds; warning logged; zero crash. | **PASS** | [service.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/lib/telegram/service.ts) |
+#### `QA-AUTH-01`: Re-Login After Google OAuth (No Password Needed)
+- **Goal:** Verify that a user who registered with Google can log back into their account anytime in 1 click without ever typing a password.
+- **Preconditions:** You have a Google account.
+- **Step-by-Step Instructions:**
+  1. Open `http://localhost:3000/login` in your browser.
+  2. Click the **"Continue with Google"** button.
+  3. Authenticate with your Google account.
+  4. Verify you land on `/dashboard`.
+  5. Click the top-right profile avatar -> Click **"Sign out"**.
+  6. You are returned to `/login`.
+  7. Click **"Continue with Google"** again.
+- **Expected Success Outcome:**
+  - [ ] System automatically logs you straight back into your dashboard without prompting for any password.
+  - [ ] All store data, products, and metrics are preserved.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Redirect loop or "Unsupported provider" (indicates Google OAuth is not enabled in Supabase Dashboard -> Auth -> Providers).
+  - ❌ Prompting for a password when clicking Google button.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
 
 ---
 
-### Module 6: Gemini AI Insights & Fallback Forecasting (AI)
-
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `AI-001` | Render AI Stock Insights on Dashboard | High | Functional | 1. Visit `/dashboard`<br>2. Inspect AI Card | Displays restock recommendations, velocity estimates, and reorder urgency. | **PASS** | [demo-rehearsal.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/demo-rehearsal.spec.ts) |
-| `AI-002` | Validate Structured AI JSON Schema | High | Validation | 1. Parse Gemini raw text with Zod | Strips markdown fences; validates summary and recommendations array. | **PASS** | [ai-parser.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/unit/ai-parser.test.ts) |
-| `AI-003` | Deterministic Rules Fallback Engine | Critical | Reliability | 1. Simulate Gemini API failure | Deterministic rules engine calculates restock advice based on sales velocity. | **PASS** | [rules-fallback.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/unit/rules-fallback.test.ts) |
-| `AI-004` | Strict Multi-Tenant AI Context Isolation | Critical | Security | 1. Generate AI prompt for Business A | Prompt strictly contains only Business A items; zero Business B data. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
-
----
-
-### Module 7: Multi-Tenant RLS Security & Integrity (SEC)
-
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `SEC-001` | Cross-Tenant SELECT Isolation | Critical | Security | 1. User B queries items belonging to Business A | Query returns empty array `[]`; Supabase RLS enforces total isolation. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
-| `SEC-002` | Cross-Tenant UPDATE Isolation | Critical | Security | 1. User B attempts UPDATE on Business A item | 0 rows affected; update rejected by RLS write policy. | **PASS** | [rls.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/rls.test.ts) |
-| `SEC-003` | Cross-Tenant DELETE Isolation | Critical | Security | 1. User B attempts DELETE on Business A item | 0 rows affected; delete rejected by RLS. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
-| `SEC-004` | Deny Client Access to `rate_limits` | High | Security | 1. Client attempts SELECT on `rate_limits` | Access denied; table inaccessible to authenticated client role. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
-| `SEC-005` | Deny Client Access to `telegram_link_codes` | Critical | Security | 1. Client attempts SELECT on `telegram_link_codes` | Access denied; tokens strictly accessible only via service-role. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
-| `SEC-006` | DB Constraints Reject Negative Price/Quantity | Critical | Security | 1. Attempt insert with price < 0 or quantity < 0 | Check constraints reject insert with DB error. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
-| `SEC-007` | SQL Injection Resilience | Critical | Security | 1. Input `' OR 1=1 --` into search input | Parameterized safely; treated as plain text; zero SQL error or data leak. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
-| `SEC-008` | Cross-Site Scripting (XSS) Sanitization | High | Security | 1. Submit item with `<script>alert(1)</script>` | Content escaped; rendered harmlessly as plain text. | **PASS** | [security-audit.test.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/integration/security-audit.test.ts) |
+#### `QA-AUTH-02`: Request Password Reset for Google or Email Account
+- **Goal:** Verify that a user (even one who signed up via Google) can request a password reset email to set a standalone password.
+- **Preconditions:** At `/login` page.
+- **Step-by-Step Instructions:**
+  1. On `/login`, click the **"Forgot Password?"** link below the password input.
+  2. A modal titled **"Reset or Set Password"** opens.
+  3. Enter your account email address (e.g. your Google account email or registered store email).
+  4. Click **"Send Reset Link"**.
+- **Expected Success Outcome:**
+  - [ ] Button shows spinning loader *"Sending..."*.
+  - [ ] Green checkmark appears with confirmation: *"Reset Email Sent! We sent a secure link to your email."*
+  - [ ] A password reset email arrives in your inbox with a secure recovery link.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Error popup without email being sent (check if SMTP is configured or if Supabase project is paused).
+  - ❌ Clicking "Forgot Password" does nothing or shows a broken alert.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
 
 ---
 
-### Module 8: Responsive Design & Layout Consistency (UI)
+#### `QA-AUTH-03`: Set New Password via `/reset-password`
+- **Goal:** Verify that opening the reset link allows setting a secure password.
+- **Preconditions:** Password reset link received or navigate to `/reset-password` with active session.
+- **Step-by-Step Instructions:**
+  1. Click the recovery link from your email, or visit `http://localhost:3000/reset-password`.
+  2. Enter a password with fewer than 8 characters (e.g., `pass123`).
+  3. Observe the strength indicator bar (should remain gray/short).
+  4. Enter a valid 8+ character password (e.g., `StrongPassword2026!`).
+  5. Re-enter the same password in **"Confirm Password"**.
+  6. Click **"Update Password & Continue"**.
+- **Expected Success Outcome:**
+  - [ ] Password updates successfully.
+  - [ ] Toast notification appears: *"Password updated successfully!"*.
+  - [ ] System automatically redirects you into `/dashboard`.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Submitting mismatched passwords fails to show "Passwords do not match" validation error.
+  - ❌ Passwords under 8 characters are accepted (violates Zod security constraint).
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
 
-| Test ID | Scenario / Title | Priority | Type | Test Steps | Expected Result | Status | Automated Reference |
-| :--- | :--- | :---: | :---: | :--- | :--- | :---: | :--- |
-| `UI-001` | Auth Page 50/50 Full-Bleed Split | High | UI/UX | 1. Open `/login` or `/signup` on desktop (1440x900) | Spans 100% viewport width and height; clean 50/50 split without outer card margin. | **PASS** | [login/page.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/app/(auth)/login/page.tsx) |
-| `UI-002` | Showcase Card with `rounded-lg` on White Canvas | High | UI/UX | 1. Inspect left showcase card on auth pages | Features `rounded-lg` corners, tight margin (`p-2.5 lg:p-3`), on pure white background. | **PASS** | [login/page.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/app/(auth)/login/page.tsx) |
-| `UI-003` | Showcase Contains No Video Badges or Play Button | Medium | UI/UX | 1. Inspect left showcase visual elements | Static warehouse image only; no play buttons, no video badges, no slide tabs. | **PASS** | [login/page.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/app/(auth)/login/page.tsx) |
-| `UI-004` | Mobile Collapse (<1024px) | High | Responsive | 1. Open `/login` or `/signup` on mobile viewport (390x844) | Left showcase collapses; auth form displays full width with comfortable margins. | **PASS** | [capture-white.spec.ts](file:///Users/lydana/Documents/T_tech/smart-inventory-web/tests/e2e/capture-white.spec.ts) |
-| `UI-005` | Global `rounded-lg` Design System Compliance | Medium | UI/UX | 1. Inspect buttons, inputs, dialog cards, dropdowns | Strictly standardized on `rounded-lg` border radius throughout app. | **PASS** | [button.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/components/ui/button.tsx) |
-| `UI-006` | Dialog Modal Mobile Margin & Inline Buttons | High | Responsive | 1. Open Add Item or Adjust Stock dialog on mobile | Card maintains `w-[calc(100%-2rem)]`; Cancel and Action buttons stay on same line. | **PASS** | [item-dialog.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/components/inventory/item-dialog.tsx) |
-| `UI-007` | Dark / Light Theme Toggle Persistence | Low | UI/UX | 1. Toggle theme in top navigation bar | Switches instantly between light and dark themes; persists in `localStorage`. | **PASS** | [theme-provider.tsx](file:///Users/lydana/Documents/T_tech/smart-inventory-web/src/components/theme-provider.tsx) |
+---
+
+#### `QA-AUTH-04`: Set or Change Password Inside Store Settings
+- **Goal:** Allow a logged-in Google OAuth user to create/update an email password directly while browsing without logging out.
+- **Preconditions:** Logged in to `/dashboard`.
+- **Step-by-Step Instructions:**
+  1. In the sidebar, click **"Settings"** (or visit `/settings`).
+  2. Scroll down to the **"Account & Security"** card.
+  3. Locate the **"Set or Update Password"** section.
+  4. Type a new password (min 8 chars) into **"New Password"**.
+  5. Type the matching password into **"Confirm Password"**.
+  6. Click **"Save Password"**.
+- **Expected Success Outcome:**
+  - [ ] Success toast: *"Password updated successfully!"*.
+  - [ ] Input fields clear automatically.
+  - [ ] You can now log in via BOTH **"Continue with Google"** AND **Email + Password** on `/login`!
+- **Failure Criteria & What to Watch For:**
+  - ❌ Form crashes or button stays disabled after entering valid inputs.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 2: AI Business Advisor & Hourly Refresh Cooldown
+
+#### `QA-AI-01`: View AI Business Advisor Card & Recommendations
+- **Goal:** Verify that the AI Business Advisor renders executive summary, restock suggestions, 2-3 marketing strategies, and supplier tips.
+- **Preconditions:** Logged in at `/dashboard` with at least 1-2 inventory items.
+- **Step-by-Step Instructions:**
+  1. Open `/dashboard`.
+  2. Scroll to the **"AI Business Advisor"** card.
+  3. Verify the model badge in the card header (either **"Gemini 3.8 Flash"** or **"Deterministic Rules"**).
+  4. Verify the **Executive Summary** box at the top.
+  5. Verify the **Suggested Restocks** section with urgency badges (`TODAY` or `THIS WEEK`).
+  6. Verify the **Turnover & Clearance Ideas** section.
+  7. Verify the **Supplier & Sourcing Tips** section.
+- **Expected Success Outcome:**
+  - [ ] Card loads without any blank white screens or runtime crashes.
+  - [ ] Recommendations display real catalog product names and quantities.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Card says "No Recommendations Yet" even though products exist.
+  - ❌ Red crash screen.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-AI-02`: Refresh Cooldown Protection (< 1 Hour)
+- **Goal:** Prevent accidental rate limit exhaustion by enforcing a 1-hour cooldown with exact minute countdown feedback.
+- **Preconditions:** AI insights have just been generated/refreshed within the last 60 minutes.
+- **Step-by-Step Instructions:**
+  1. On the AI Advisor card header, click the **"Refresh"** button.
+  2. Observe the toast notification.
+- **Expected Success Outcome:**
+  - [ ] Toast displays clear remaining cooldown message:  
+    *"AI insights can be refreshed once per hour. You can refresh again in X minutes."*
+  - [ ] Previous recommendations remain visible without being wiped out.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Generic error code like "500 Internal Server Error" without user-friendly minutes countdown.
+  - ❌ Infinite loading spinner that freezes the screen.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-AI-03`: Refresh Execution After 1 Hour
+- **Goal:** Verify that once 1 hour has elapsed, clicking "Refresh" successfully updates recommendations.
+- **Preconditions:** Last generation was > 1 hour ago (or test store reset).
+- **Step-by-Step Instructions:**
+  1. Verify the header shows *"Updated at [timestamp]"*.
+  2. Once 1 hour has passed since that timestamp, click **"Refresh"**.
+  3. Button text changes to *"Analyzing..."* with an animated spinner.
+- **Expected Success Outcome:**
+  - [ ] Success toast: *"Recommendations refreshed with latest inventory data"*.
+  - [ ] Timestamp updates to the current time.
+  - [ ] Fresh restock and marketing strategies are displayed based on current stock.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Blocked even after 1 hour has passed.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 3: Marketing Strategies & Content Scrolling
+
+#### `QA-MKT-01`: Verify Exactly 2 to 3 Marketing Strategies
+- **Goal:** Ensure the AI always delivers 2 to 3 practical marketing strategies even if all stock is healthy.
+- **Preconditions:** Dashboard open.
+- **Step-by-Step Instructions:**
+  1. Inspect the **"Turnover & Clearance Ideas"** section of the AI Advisor card.
+  2. Count the number of marketing strategy cards displayed.
+- **Expected Success Outcome:**
+  - [ ] Section title shows either:  
+    `Turnover & Clearance Ideas (2)` or `Turnover & Clearance Ideas (3)`.
+  - [ ] Exactly 2 or 3 cards are rendered.
+  - [ ] Each card has a channel badge (`in-store sign`, `social media`, `sms`, or `telegram broadcast`).
+- **Failure Criteria & What to Watch For:**
+  - ❌ 0 or only 1 marketing strategy card shown.
+  - ❌ More than 3 cards overflowing container.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-MKT-02`: Marketing Text Scrolling & Full Visibility
+- **Goal:** Verify that the full marketing idea and promotional copy can be read completely without text being cut off by `line-clamp`.
+- **Preconditions:** Marketing cards displayed on Dashboard.
+- **Step-by-Step Instructions:**
+  1. Look at the description paragraph under the title in any marketing card.
+  2. Look at the monospace sample message box (e.g., `""Special offer on..."`).
+  3. If the message is long, scroll inside the box with your mouse wheel or finger.
+- **Expected Success Outcome:**
+  - [ ] Full explanation is readable without three dots (`...`) cutting off the text mid-sentence.
+  - [ ] Sample message box allows smooth vertical scrolling (`overflow-y-auto`) to read the complete copy.
+  - [ ] Card layout does not break or get clipped on mobile screens.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Text truncated after 2 lines with no way to expand or scroll.
+  - ❌ Text overflows outside the card border.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-MKT-03`: One-Click Copy Marketing Message
+- **Goal:** Verify promotional messages can be copied instantly for posting to Telegram or Facebook.
+- **Step-by-Step Instructions:**
+  1. Click the **"Copy Message"** button at the bottom of any marketing card.
+  2. Open any text editor or browser URL bar and press `Ctrl+V` (or `Cmd+V` on Mac).
+- **Expected Success Outcome:**
+  - [ ] Button icon turns into a green checkmark and button text changes to *"Copied"*.
+  - [ ] Toast notification: *"Promotion copied to clipboard"*.
+  - [ ] Pasted text exactly matches the quote in the sample message box.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Toast "Unable to copy to clipboard".
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 4: AI Workflow & System Architecture Dialog
+
+#### `QA-WKF-01`: Open AI Workflow Modal
+- **Goal:** Verify that users can inspect how the AI pipeline works at any time.
+- **Step-by-Step Instructions:**
+  1. On the AI Advisor card header, click the **"AI Workflow"** button (next to Refresh).
+- **Expected Success Outcome:**
+  - [ ] Modal opens titled **"How the AI Workflow Operates"**.
+  - [ ] Clear subtitle explains deterministic rules combined with Google Gemini 3.8 Flash.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Button does not respond or modal fails to open.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-WKF-02`: Verify 4-Layer Workflow Explanations
+- **Goal:** Verify all 4 architectural steps are clearly documented in the UI.
+- **Step-by-Step Instructions:**
+  1. In the open AI Workflow dialog, review the 4 steps:
+     - **Step 1:** Deterministic Inventory Rules Engine (5 mathematical states).
+     - **Step 2:** Google Gemini 3.8 Flash Synthesis (2-3 marketing strategies + restocks).
+     - **Step 3:** Anti-Hallucination & Schema Validation (checks against catalog).
+     - **Step 4:** Hourly Auto-Refresh & Deterministic Fallback (zero downtime).
+  2. Click **"Got it"** to dismiss the dialog.
+- **Expected Success Outcome:**
+  - [ ] All 4 steps are styled with clear color-coded icons and concise descriptions.
+  - [ ] Dialog closes smoothly when clicking "Got it" or the "X" button.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 5: Product Import (Excel .xlsx & CSV)
+
+#### `QA-IMP-01`: Download Sample Spreadsheets
+- **Goal:** Verify users can download formatted sample templates in both CSV and Excel formats.
+- **Preconditions:** Navigate to `/inventory`.
+- **Step-by-Step Instructions:**
+  1. On `/inventory`, locate the toolbar above the items table.
+  2. Click the **"Import"** button (with green spreadsheet icon).
+  3. In the top banner, click **"CSV Template"**.
+  4. In the top banner, click **"Excel Template"**.
+- **Expected Success Outcome:**
+  - [ ] Browser downloads `smart_inventory_products_template.csv`.
+  - [ ] Browser downloads `smart_inventory_products_template.xlsx`.
+  - [ ] Opening either file in Excel shows columns: `Product Name`, `SKU`, `Category`, `Unit`, `Starting Quantity`, `Low Stock Threshold`, `Selling Price`, `Cost Price`, `Expiry Date`, `Notes`.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Download fails or file is corrupt.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-IMP-02`: Upload and Parse Valid Excel (.xlsx) File
+- **Goal:** Verify Excel spreadsheets are parsed into live product rows with preview.
+- **Step-by-Step Instructions:**
+  1. Open the downloaded `smart_inventory_products_template.xlsx` (or create an Excel file with 2-3 products).
+  2. Inside the Import dialog, click the upload area (or drag & drop the file).
+  3. Select your `.xlsx` file.
+- **Expected Success Outcome:**
+  - [ ] File name is displayed with a green checkmark.
+  - [ ] **Spreadsheet Preview** appears showing product names, categories, quantities, and prices.
+  - [ ] Green badge displays: `X ready to import` (e.g. `3 ready to import`).
+  - [ ] Green **"Valid"** indicator appears on each row.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Toast "Please upload a valid .xlsx or .csv spreadsheet file".
+  - ❌ File parsing error or frozen screen.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-IMP-03`: Execute Batch Import & Confirm Inventory Insertion
+- **Goal:** Verify that confirming the import writes all products to the database and refreshes the table.
+- **Step-by-Step Instructions:**
+  1. With valid parsed products in the preview, click **"Confirm Import (X Items)"**.
+  2. Watch the button change to *"Importing Products..."* with a spinner.
+- **Expected Success Outcome:**
+  - [ ] Modal automatically closes.
+  - [ ] Success toast: *"Successfully imported X products into your inventory!"*.
+  - [ ] The items table refreshes immediately and displays the newly imported products.
+  - [ ] Initial stock movements are recorded for all products with starting quantity > 0.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Items do not appear in the table after import.
+  - ❌ Duplicate SKU error without explanation.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-IMP-04`: Reject Invalid Rows (Negative Quantity or Missing Name)
+- **Goal:** Verify spreadsheet validation catches corrupt or invalid rows before saving.
+- **Step-by-Step Instructions:**
+  1. Create a test CSV or Excel file where one row has a blank Product Name and another has quantity `-10`.
+  2. Upload the file in the Import dialog.
+- **Expected Success Outcome:**
+  - [ ] Preview marks the invalid rows in light red.
+  - [ ] Shows exact error reason: *"Missing product name"* or *"Quantity cannot be negative"*.
+  - [ ] Red badge displays `X invalid`.
+  - [ ] Only valid rows can be imported, or user can clear and fix the file.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 6: Category Creation & Management
+
+#### `QA-CAT-01`: Open Category Management Dialog
+- **Goal:** Verify users can view, add, and delete categories from the dedicated categories manager.
+- **Step-by-Step Instructions:**
+  1. Navigate to `/inventory`.
+  2. In the toolbar next to "Add Item", click the **"Categories"** button (tag icon).
+- **Expected Success Outcome:**
+  - [ ] Modal opens titled **"Manage Product Categories"**.
+  - [ ] Lists existing store categories with count badge.
+  - [ ] Displays **"Quick Add Common Categories"** pill suggestions (e.g. *Bakery*, *Beverages*, *Dairy & Eggs*, *Fresh Produce*).
+- **Failure Criteria & What to Watch For:**
+  - ❌ Button missing or clicking does nothing.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-CAT-02`: Quick-Add Suggested Category
+- **Goal:** Verify clicking a quick-add pill immediately creates the category.
+- **Step-by-Step Instructions:**
+  1. In the Categories dialog, click any suggested pill (e.g., **"+ Beverages"**).
+- **Expected Success Outcome:**
+  - [ ] Toast appears: *"Created category "Beverages""*.
+  - [ ] "Beverages" moves into the **"Existing Store Categories"** list.
+  - [ ] The pill disappears from the suggestions list.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Error toast "Failed to create category" (verify Supabase project is resumed).
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-CAT-03`: Create Custom Category
+- **Goal:** Verify creating a custom category via the text input.
+- **Step-by-Step Instructions:**
+  1. In the Categories dialog input box, type: `Organic Gourmet Snacks`.
+  2. Click **"Add"** (or press Enter).
+- **Expected Success Outcome:**
+  - [ ] Toast: *"Created category "Organic Gourmet Snacks""*.
+  - [ ] Input box clears.
+  - [ ] The new category appears in the list.
+  - [ ] Click **"Done"** to close the dialog.
+  - [ ] Open the **Category Filter** dropdown on `/inventory`: `Organic Gourmet Snacks` is now an available filter option!
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-CAT-04`: Create Category On-the-Fly Inside "Add Item" Dialog
+- **Goal:** Verify a user can create a brand new category while adding a product without opening the category manager.
+- **Step-by-Step Instructions:**
+  1. On `/inventory`, click **"Add Item"**.
+  2. Look at the **Category** section.
+  3. If you have existing categories, click the dropdown and choose **"+ Create new category..."** (or click "+ New category" link).
+  4. The input switches to a text box. Type: `Fresh Bakery Delights`.
+  5. Fill Name: `Artisan Croissant`, Qty: `20`.
+  6. Click **"Add to Inventory"**.
+- **Expected Success Outcome:**
+  - [ ] Item is created under category `Fresh Bakery Delights`.
+  - [ ] Toast: *"Added "Artisan Croissant" to inventory"*.
+  - [ ] Category `Fresh Bakery Delights` is now saved in your store categories list!
+- **Failure Criteria & What to Watch For:**
+  - ❌ Cannot type new category name.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 7: Interactive System Tour ("Take a Tour") & Loading
+
+#### `QA-TUR-01`: Launch System Tour from Top Navigation
+- **Goal:** Verify that clicking "Take a Tour" in the topbar opens the interactive tour.
+- **Step-by-Step Instructions:**
+  1. Look at the top navigation bar (next to the theme toggle icon).
+  2. Click the **"Take a Tour"** button (compass icon).
+- **Expected Success Outcome:**
+  - [ ] An interactive modal opens titled **"Step 1 of 7: Welcome to Smart Inventory AI"**.
+  - [ ] Blue progress bar shows `14%` progress.
+  - [ ] Key capabilities bullet points are displayed.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Button not visible or dialog fails to open.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-TUR-02`: Step Through All 7 Tour Stages
+- **Goal:** Verify smooth navigation through all system feature spotlights.
+- **Step-by-Step Instructions:**
+  1. With the tour open, click **"Next"** repeatedly.
+  2. Verify all 7 steps appear:
+     - **Step 1:** System Overview
+     - **Step 2:** AI Business Advisor (Gemini 3.8 Flash)
+     - **Step 3:** Catalog & Quick Stock Adjustments
+     - **Step 4:** Excel (.xlsx) & CSV Bulk Product Import
+     - **Step 5:** Product Category Creation & Filtering
+     - **Step 6:** Suppliers Directory & Lead Times
+     - **Step 7:** Instant Telegram Bot Notifications
+  3. On Step 7, click **"Previous"** to verify backward navigation works.
+  4. Click **"Next"** back to Step 7, then click **"Get Started"**.
+- **Expected Success Outcome:**
+  - [ ] Progress bar smoothly animates from 14% to 100%.
+  - [ ] Clicking "Previous" decrements step counter.
+  - [ ] Clicking "Get Started" closes the modal cleanly.
+  - [ ] Clicking "Skip Tour" on any slide closes the tour immediately.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-TUR-03`: Verify Loading Skeletons on Navigation
+- **Goal:** Verify that page transitions display smooth skeleton loaders without layout shifts.
+- **Step-by-Step Instructions:**
+  1. Open Network tab in Developer Tools (optional: set throttling to "Fast 3G").
+  2. Click between **"Dashboard"**, **"Inventory"**, **"Suppliers"**, and **"Settings"**.
+- **Expected Success Outcome:**
+  - [ ] Modern pulsing skeleton placeholders appear (4 stat cards, AI advisor card outline, chart placeholders).
+  - [ ] No jarring blank white screens or layout jumps.
+  - [ ] Smooth transition as data resolves.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 8: Stock Adjustments & Low Stock Warnings
+
+#### `QA-STK-01`: Inline Quick Sale (-1) and Restock (+1)
+- **Goal:** Verify 1-click quantity adjustments directly on table rows.
+- **Step-by-Step Instructions:**
+  1. Navigate to `/inventory`.
+  2. In any product row with quantity > 0, click the **"-"** button (Record 1 unit sold).
+  3. Observe quantity count.
+  4. Click the **"+"** button (Receive 1 unit restock).
+- **Expected Success Outcome:**
+  - [ ] Quantity decrements by 1 on click of `-`.
+  - [ ] Quantity increments by 1 on click of `+`.
+  - [ ] Toast confirms: *"Recorded 1 unit sale"* / *"Recorded 1 unit restock"*.
+  - [ ] If quantity reaches 0, the `-` button is disabled (preventing negative stock).
+- **Failure Criteria & What to Watch For:**
+  - ❌ Stock drops to negative numbers (e.g. -1).
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+#### `QA-STK-02`: Atomic Stock Adjustment Dialog with Audit Reason
+- **Goal:** Verify custom delta adjustments with reason logging (e.g. damaged goods, supplier delivery).
+- **Step-by-Step Instructions:**
+  1. On `/inventory`, click the row action menu (`...`) on any item -> Click **"Adjust Stock"**.
+  2. Choose reason: **"Adjustment"** or **"Damaged"**.
+  3. Enter delta: `-5`.
+  4. Type note: `Water damaged box during transport`.
+  5. Click **"Save Adjustment"**.
+- **Expected Success Outcome:**
+  - [ ] Modal closes.
+  - [ ] Quantity decreases by 5.
+  - [ ] Click the item's name to view details: audit timeline logs the exact -5 change, timestamp, and note.
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+### Module 9: Telegram Bot Real-Time Alerts
+
+#### `QA-TEL-01`: Connect Store to Telegram Bot
+- **Goal:** Verify linking store alerts to Telegram.
+- **Preconditions:** Telegram app installed on your phone or desktop.
+- **Step-by-Step Instructions:**
+  1. In the sidebar, click **"Telegram Alerts"** (or visit `/alerts`).
+  2. Locate the **"Telegram Bot Integration"** card.
+  3. Click **"Generate Link Code"**.
+  4. Copy the 6-character code (or click the direct link to `@AIinventorysystemBOT`).
+  5. In Telegram, send the command: `/start [CODE]`.
+- **Expected Success Outcome:**
+  - [ ] Bot replies: *"✅ Store successfully linked! You will now receive instant inventory alerts."*
+  - [ ] The web page updates to show status badge **"Connected"** with your Telegram username.
+- **Failure Criteria & What to Watch For:**
+  - ❌ Bot does not respond (check if bot token is valid in `.env.local`).
+- **Tester Result:** `[ ] PASS` &nbsp; `[ ] FAIL` &nbsp; | Notes: __________________________
+
+---
+
+## 📊 Summary Scorecard
+
+| Module | Total Tests | Passed | Failed | Blocked | Notes |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **1. Auth & Google Login** | 4 | | | | |
+| **2. AI Advisor & Refresh** | 3 | | | | |
+| **3. Marketing Strategies** | 3 | | | | |
+| **4. AI Workflow Architecture** | 2 | | | | |
+| **5. Excel & CSV Import** | 4 | | | | |
+| **6. Category Management** | 4 | | | | |
+| **7. System Tour & Loading** | 3 | | | | |
+| **8. Stock Levels & ACID** | 2 | | | | |
+| **9. Telegram Alerts** | 1 | | | | |
+| **TOTAL** | **26** | | | | |
+
+---
+
+> **Ready to test?**  
+> 1. Make sure your Supabase project is active (see Step 1 above).  
+> 2. Open `http://localhost:3000/dashboard` in your browser.  
+> 3. Go through each test case in sequence and check off `[X] PASS` as you verify each feature!

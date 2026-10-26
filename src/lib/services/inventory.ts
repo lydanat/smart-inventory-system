@@ -111,15 +111,30 @@ export async function getItemMovements(businessId: string, itemId: string, limit
 
 export async function getCategories(businessId: string): Promise<string[]> {
   const supabase = await createClient();
-  const { data } = await supabase
+
+  let tableCategories: string[] = [];
+  try {
+    const { data: catData } = await supabase
+      .from('categories')
+      .select('name')
+      .eq('business_id', businessId);
+    if (catData) {
+      tableCategories = catData.map((c) => c.name);
+    }
+  } catch {
+    // Fallback in case categories table is pending migration
+  }
+
+  const { data: itemData } = await supabase
     .from('items')
     .select('category')
     .eq('business_id', businessId)
     .is('archived_at', null);
 
-  if (!data) return [];
-  const unique = Array.from(new Set(data.map((i) => i.category))).filter(Boolean);
-  return unique.sort();
+  const itemCategories = itemData ? itemData.map((i) => i.category) : [];
+
+  const combined = Array.from(new Set([...tableCategories, ...itemCategories])).filter(Boolean);
+  return combined.sort((a, b) => a.localeCompare(b));
 }
 
 export async function createItem(businessId: string, userId: string, input: ItemFormInput) {
