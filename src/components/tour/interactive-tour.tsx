@@ -164,13 +164,37 @@ export function InteractiveTour() {
     };
   }, [isOpen, updateRect]);
 
+  const handleNext = React.useCallback(() => {
+    if (currentStepIndex < TOUR_STEPS.length - 1) {
+      setCurrentStepIndex((prev) => prev + 1);
+    } else {
+      setIsOpen(false);
+      try {
+        localStorage.setItem('has_seen_interactive_tour', 'true');
+      } catch {}
+    }
+  }, [currentStepIndex]);
+
+  const handlePrev = React.useCallback(() => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((prev) => prev - 1);
+    }
+  }, [currentStepIndex]);
+
+  const handleSkip = React.useCallback(() => {
+    setIsOpen(false);
+    try {
+      localStorage.setItem('has_seen_interactive_tour', 'true');
+    } catch {}
+  }, []);
+
   // Keyboard navigation
   React.useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsOpen(false);
+        handleSkip();
       } else if (e.key === 'ArrowRight') {
         handleNext();
       } else if (e.key === 'ArrowLeft') {
@@ -180,31 +204,7 @@ export function InteractiveTour() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
-
-  const handleNext = () => {
-    if (currentStepIndex < TOUR_STEPS.length - 1) {
-      setCurrentStepIndex((prev) => prev + 1);
-    } else {
-      setIsOpen(false);
-      try {
-        localStorage.setItem('has_seen_interactive_tour', 'true');
-      } catch {}
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex((prev) => prev - 1);
-    }
-  };
-
-  const handleSkip = () => {
-    setIsOpen(false);
-    try {
-      localStorage.setItem('has_seen_interactive_tour', 'true');
-    } catch {}
-  };
+  }, [isOpen, handleNext, handlePrev, handleSkip]);
 
   if (!isOpen) return null;
 
@@ -229,8 +229,24 @@ export function InteractiveTour() {
         right: '16px',
         zIndex: 9999,
       };
+    } else if (step.placement === 'right' || (targetRect.left < 80 && targetRect.width < 320)) {
+      // Position to the RIGHT of the sidebar with ample margin so navigation links are fully visible!
+      const left = Math.min(
+        window.innerWidth - tooltipWidth - padding,
+        Math.max(padding, targetRect.right + 24)
+      );
+      // Vertically align near the top of the sidebar navigation
+      const top = Math.max(padding, Math.min(targetRect.top + 32, window.innerHeight - 340));
+
+      tooltipStyle = {
+        position: 'fixed',
+        top: `${Math.round(top)}px`,
+        left: `${Math.round(left)}px`,
+        width: `${tooltipWidth}px`,
+        zIndex: 9999,
+      };
     } else {
-      // Desktop positioned relative to rect
+      // Desktop positioned relative to rect (top or bottom)
       const spaceBelow = window.innerHeight - targetRect.bottom;
       const spaceAbove = targetRect.top;
 

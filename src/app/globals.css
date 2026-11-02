@@ -43,24 +43,24 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 25 35% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 25 35% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --popover-foreground: 25 35% 15%;
+    --primary: 25 37.5% 18.8%; /* #422D1E Warm Espresso Brown */
+    --primary-foreground: 50 50% 95.3%; /* #F9F7ED Warm Cream */
+    --secondary: 35 25% 94%;
+    --secondary-foreground: 25 37.5% 18.8%;
+    --muted: 35 25% 94%;
+    --muted-foreground: 25 15% 42%;
+    --accent: 35 25% 94%;
+    --accent-foreground: 25 37.5% 18.8%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    --border: 35 18% 88%;
+    --input: 35 18% 88%;
+    --ring: 25 37.5% 18.8%;
     --radius: 0.5rem;
 
     /* Status indicators */
@@ -78,25 +78,26 @@
 
   @media (prefers-color-scheme: dark) {
     :root:not(.light) {
-      --background: 240 10% 3.9%;
-      --foreground: 0 0% 98%;
-      --card: 240 10% 6%;
-      --card-foreground: 0 0% 98%;
-      --popover: 240 10% 6%;
-      --popover-foreground: 0 0% 98%;
-      --primary: 0 0% 98%;
-      --primary-foreground: 240 5.9% 10%;
-      --secondary: 240 3.7% 15.9%;
-      --secondary-foreground: 0 0% 98%;
-      --muted: 240 3.7% 15.9%;
-      --muted-foreground: 240 5% 64.9%;
-      --accent: 240 3.7% 15.9%;
-      --accent-foreground: 0 0% 98%;
+      /* Warm Espresso Brown Theme (#422D1E) with Warm Cream Text (#F9F7ED) */
+      --background: 25 37.5% 18.8%;
+      --foreground: 50 50% 95.3%;
+      --card: 25 33% 23%;
+      --card-foreground: 50 50% 95.3%;
+      --popover: 25 33% 23%;
+      --popover-foreground: 50 50% 95.3%;
+      --primary: 50 50% 95.3%;
+      --primary-foreground: 25 37.5% 18.8%;
+      --secondary: 25 28% 26%;
+      --secondary-foreground: 50 50% 95.3%;
+      --muted: 25 28% 26%;
+      --muted-foreground: 40 22% 72%;
+      --accent: 25 28% 26%;
+      --accent-foreground: 50 50% 95.3%;
       --destructive: 0 62.8% 30.6%;
-      --destructive-foreground: 0 0% 98%;
-      --border: 240 3.7% 15.9%;
-      --input: 240 3.7% 15.9%;
-      --ring: 240 4.9% 83.9%;
+      --destructive-foreground: 50 50% 95.3%;
+      --border: 25 24% 28%;
+      --input: 25 24% 28%;
+      --ring: 35 60% 60%;
 
       --status-ok: 142.1 70.6% 45.3%;
       --status-ok-bg: 142.1 70.6% 12%;
@@ -112,25 +113,26 @@
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    /* Warm Espresso Brown Theme (#422D1E) with Warm Cream Text (#F9F7ED) */
+    --background: 25 37.5% 18.8%;
+    --foreground: 50 50% 95.3%;
+    --card: 25 33% 23%;
+    --card-foreground: 50 50% 95.3%;
+    --popover: 25 33% 23%;
+    --popover-foreground: 50 50% 95.3%;
+    --primary: 50 50% 95.3%;
+    --primary-foreground: 25 37.5% 18.8%;
+    --secondary: 25 28% 26%;
+    --secondary-foreground: 50 50% 95.3%;
+    --muted: 25 28% 26%;
+    --muted-foreground: 40 22% 72%;
+    --accent: 25 28% 26%;
+    --accent-foreground: 50 50% 95.3%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --destructive-foreground: 50 50% 95.3%;
+    --border: 25 24% 28%;
+    --input: 25 24% 28%;
+    --ring: 35 60% 60%;
 
     /* Status indicators for dark mode */
     --status-ok: 142.1 70.6% 45.3%;

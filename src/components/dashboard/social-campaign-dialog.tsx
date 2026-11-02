@@ -9,20 +9,47 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Copy,
   Check,
   Download,
   Share2,
-  ExternalLink,
   Sparkles,
+  Upload,
+  ImagePlus,
+  RefreshCw,
+  Printer,
+  FileCode,
+  Trash2,
+  Wand2,
+  Layers,
+  Utensils,
+  Type,
+  Palette,
+  Image as ImageIcon,
+  Sliders,
   Store,
-  Tag,
-  Flame,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { MarketingItem } from '@/lib/validation/ai';
+import {
+  type PosterDesign,
+  type PosterTheme,
+} from '@/lib/validation/poster';
+import { generatePosterAction } from '@/actions/poster';
+import { generateFallbackPosterDesign } from '@/lib/utils/poster-theme';
+import { removeImageBackground } from '@/lib/utils/background-remover';
 
 interface SocialCampaignDialogProps {
   open: boolean;
@@ -35,36 +62,347 @@ export function SocialCampaignDialog({
   open,
   onOpenChange,
   campaign,
-  businessName = 'My Store',
+  businessName = 'Apex Supermarket',
 }: SocialCampaignDialogProps) {
   const [copiedCaption, setCopiedCaption] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [isGeneratingPoster, setIsGeneratingPoster] = React.useState(false);
+  const [isRemovingBg, setIsRemovingBg] = React.useState(false);
+  const [customImage, setCustomImage] = React.useState<string | null>(null);
+  const [originalImage, setOriginalImage] = React.useState<string | null>(null);
+  const [cutoutImage, setCutoutImage] = React.useState<string | null>(null);
+  const [isCutoutActive, setIsCutoutActive] = React.useState(false);
+  const [customImageName, setCustomImageName] = React.useState<string | null>(null);
+  const [tolerance, setTolerance] = React.useState<number>(45);
+  const [selectedTheme, setSelectedTheme] = React.useState<PosterTheme>('editorial-fresh');
+  const [activeTab, setActiveTab] = React.useState<'poster' | 'caption'>('poster');
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const svgRef = React.useRef<SVGSVGElement>(null);
+
+  const targetItem = campaign?.targetItemNames?.[0] || 'Featured Product';
+  const dealMessage = campaign?.sampleMessage || 'Special promotion available today';
+
+  // State for the editable Poster Design
+  const [poster, setPoster] = React.useState<PosterDesign>(() =>
+    generateFallbackPosterDesign({
+      topic: campaign?.title || 'Promotional Event',
+      targetItem,
+      businessName,
+      deal: dealMessage,
+      stylePreference: 'editorial-fresh',
+    })
+  );
+
+  // Initialize or re-initialize poster design when campaign changes
+  React.useEffect(() => {
+    if (campaign && open) {
+      const fallback = generateFallbackPosterDesign({
+        topic: campaign.title || 'Promotional Event',
+        targetItem: campaign.targetItemNames?.[0] || 'Featured Product',
+        businessName,
+        deal: campaign.sampleMessage || 'Special promotion',
+        stylePreference: selectedTheme,
+      });
+
+      if (campaign.posterHeadline) {
+        fallback.headline = campaign.posterHeadline;
+      }
+      if (campaign.promoBadge) {
+        fallback.badge = campaign.promoBadge;
+      }
+      setPoster(fallback);
+      setSelectedTheme(fallback.theme);
+    }
+  }, [campaign, businessName, open, selectedTheme]);
 
   if (!campaign) return null;
 
-  const targetItem = campaign.targetItemNames?.[0] || 'Special Item';
-  const promoBadge = campaign.promoBadge || 'SPECIAL OFFER';
-  const headline = campaign.posterHeadline || campaign.title.toUpperCase();
-  const cta = campaign.callToAction || 'Visit in-store today or message our page to reserve!';
+  const headline = poster.headline || campaign.posterHeadline || campaign.title.toUpperCase();
+  const cta = poster.callToAction || campaign.callToAction || 'VISIT IN-STORE TODAY TO REDEEM';
 
-  // Format Facebook Caption if not already generated
+  // Format Facebook Caption without inappropriate placeholder text
   const caption =
     campaign.facebookCaption ||
-    `🔥 ${headline} 🔥\n\n${campaign.idea}\n\n👉 Featured Item: ${targetItem}\n🏷️ Deal: ${campaign.sampleMessage}\n\n📍 ${cta}\n\n#SpecialOffer #ShopLocal #${targetItem.replace(/[^a-zA-Z0-9]/g, '')} #Deals`;
+    `🌿 ${headline} 🌿\n\n${campaign.idea}\n\nFeatured Selection: ${targetItem}\nOffer: ${campaign.sampleMessage}\n\n📍 ${cta}\n\n#SpecialOffer #ShopLocal #${targetItem.replace(/[^a-zA-Z0-9]/g, '')} #FreshQuality`;
 
   const handleCopyCaption = async () => {
     try {
       await navigator.clipboard.writeText(caption);
       setCopiedCaption(true);
-      toast.success('Facebook post caption copied to clipboard!');
+      toast.success('Social caption copied to clipboard!');
       setTimeout(() => setCopiedCaption(false), 2500);
     } catch {
       toast.error('Unable to copy caption');
     }
   };
 
-  const handleDownloadPoster = () => {
+  // Upload product photo handler
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (PNG, JPG, WEBP)');
+      return;
+    }
+
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('Image size must be under 12MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const rawDataUrl = event.target?.result as string;
+      if (rawDataUrl) {
+        setOriginalImage(rawDataUrl);
+        setCustomImage(rawDataUrl);
+        setCustomImageName(file.name);
+        setCutoutImage(null);
+        setIsCutoutActive(false);
+        toast.success(`Photo loaded: ${file.name}. Click "Remove Background" for seamless cutout!`);
+      }
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Background removal with adjustable tolerance
+  const handleRemoveBackground = async (tolOverride?: number) => {
+    const sourceImg = originalImage || customImage;
+    if (!sourceImg) return;
+
+    const tolToUse = tolOverride !== undefined ? tolOverride : tolerance;
+    setIsRemovingBg(true);
+    const toastId = toast.loading('Removing background & isolating product...');
+
+    try {
+      const cutout = await removeImageBackground(sourceImg, tolToUse);
+      if (cutout) {
+        setCutoutImage(cutout);
+        setCustomImage(cutout);
+        setIsCutoutActive(true);
+        toast.success('Background removed! Seamless product cutout with soft ground shadow.', { id: toastId });
+      } else {
+        toast.error('Could not isolate product background', { id: toastId });
+      }
+    } catch (err) {
+      console.error('Background removal error:', err);
+      toast.error('Could not auto-remove background. Try adjusting tolerance slider.', { id: toastId });
+    } finally {
+      setIsRemovingBg(false);
+    }
+  };
+
+  const handleToggleCutout = () => {
+    if (isCutoutActive && originalImage) {
+      setCustomImage(originalImage);
+      setIsCutoutActive(false);
+      toast.info('Showing original uploaded photo');
+    } else if (!isCutoutActive && cutoutImage) {
+      setCustomImage(cutoutImage);
+      setIsCutoutActive(true);
+      toast.info('Showing isolated cutout product');
+    }
+  };
+
+  // Adapt to store stock presets
+  const handleSelectStockPreset = (presetKey: string) => {
+    switch (presetKey) {
+      case 'avocado':
+        setCustomImage('/samples/sample-product-cutout.png');
+        setOriginalImage('/samples/sample-product-cutout.png');
+        setCutoutImage('/samples/sample-product-cutout.png');
+        setCustomImageName('avocado-toast-cutout.png');
+        setIsCutoutActive(true);
+        setSelectedTheme('editorial-fresh');
+        setPoster((prev) => ({
+          ...prev,
+          theme: 'editorial-fresh',
+          headline: 'FRESH DAILY',
+          subheadline: 'Healthy Choice',
+          category: 'REAL FOOD CLUB',
+          offerHighlight: 'BACK TO SIMPLE TASTE',
+          productDescription: 'NATURAL INGREDIENTS • HOUSE RECIPES',
+          eventDates: 'Weekend Harvest • Fresh Batches',
+          eventTime: '8:00 AM – 7:00 PM Daily',
+          location: `${businessName} • Artisan Bakery Hub`,
+          contactDetails: 'EST. 2026',
+          callToAction: 'VISIT IN-STORE TODAY TO REDEEM',
+          finePrint: '*Handcrafted daily with fresh locally sourced ingredients. While supplies last.',
+          backgroundColor: '#F9F7ED',
+          primaryColor: '#1B3B22',
+          textColor: '#1B3B22',
+          accentColor: '#2d5a37',
+          mutedTextColor: '#422D1E',
+        }));
+        toast.success('Loaded Avocado Toast Reference Style!');
+        break;
+
+      case 'matcha':
+        setSelectedTheme('editorial-fresh');
+        setPoster((prev) => ({
+          ...prev,
+          theme: 'editorial-fresh',
+          headline: 'CEREMONIAL GRADE',
+          subheadline: 'Matcha Green Tea',
+          category: 'SHADE GROWN',
+          offerHighlight: 'FIRST HARVEST',
+          productDescription: 'TRADITIONAL STONE MILLED • 100% ORGANIC',
+          eventDates: 'This Week • Limited Small Batch',
+          eventTime: '8:00 AM – 7:00 PM Daily',
+          location: `${businessName} • Specialty Tea Bar`,
+          contactDetails: 'EST. 2026',
+          callToAction: 'VISIT IN-STORE TODAY TO REDEEM',
+          finePrint: '*Authentic ceremonial shade-grown matcha powder. While supplies last.',
+          backgroundColor: '#F9F7ED',
+          primaryColor: '#1B3B22',
+          textColor: '#1B3B22',
+          accentColor: '#2d5a37',
+          mutedTextColor: '#422D1E',
+        }));
+        toast.success('Adapted to Matcha Green Tea Powder (Stock Item)!');
+        break;
+
+      case 'espresso':
+        setSelectedTheme('dark-luxury');
+        setPoster((prev) => ({
+          ...prev,
+          theme: 'dark-luxury',
+          headline: 'ROASTED FRESH',
+          subheadline: 'Single Origin Roast',
+          category: 'SPECIALTY COFFEE',
+          offerHighlight: '100% ARABICA BEANS',
+          productDescription: 'SMALL BATCH ROASTED • SUSTAINABLY SOURCED',
+          eventDates: 'Daily Roast • Fresh Batch',
+          eventTime: '7:00 AM – 6:00 PM Daily',
+          location: `${businessName} • Espresso Bar`,
+          contactDetails: 'EST. 2026',
+          callToAction: 'VISIT IN-STORE TODAY TO REDEEM',
+          finePrint: '*Whole bean specialty grade coffee roasted locally.',
+          backgroundColor: '#422D1E',
+          primaryColor: '#F9F7ED',
+          textColor: '#F9F7ED',
+          accentColor: '#D97706',
+          mutedTextColor: '#D6C7B2',
+        }));
+        toast.success('Adapted to Espresso Roast Beans (Stock Item)!');
+        break;
+
+      case 'sourdough':
+        setSelectedTheme('editorial-fresh');
+        setPoster((prev) => ({
+          ...prev,
+          theme: 'editorial-fresh',
+          headline: 'BAKED DAILY',
+          subheadline: 'Artisan Sourdough Loaf',
+          category: 'SLOW FERMENTED',
+          offerHighlight: 'WILD YEAST CRUST',
+          productDescription: 'HANDCRAFTED DAILY • STONE GROUND FLOUR',
+          eventDates: 'Morning Bake • 7:00 AM Fresh',
+          eventTime: '7:00 AM – 4:00 PM Daily',
+          location: `${businessName} • Artisan Bakery`,
+          contactDetails: 'EST. 2026',
+          callToAction: 'VISIT IN-STORE TODAY TO REDEEM',
+          finePrint: '*Naturally fermented for 24 hours. Crusty exterior with soft airy crumb.',
+          backgroundColor: '#F9F7ED',
+          primaryColor: '#1B3B22',
+          textColor: '#1B3B22',
+          accentColor: '#2d5a37',
+          mutedTextColor: '#422D1E',
+        }));
+        toast.success('Adapted to Artisan Sourdough (Stock Item)!');
+        break;
+
+      case 'oatmilk':
+        setSelectedTheme('editorial-fresh');
+        setPoster((prev) => ({
+          ...prev,
+          theme: 'editorial-fresh',
+          headline: 'BARISTA EDITION',
+          subheadline: 'Creamy Oat Milk 1L',
+          category: 'LOCAL CRAFT RESERVE',
+          offerHighlight: 'MICRO-FOAM QUALITY',
+          productDescription: 'CLEAN INGREDIENTS • ZERO ARTIFICIAL ADDITIVES',
+          eventDates: 'Chilled Daily • In-Store',
+          eventTime: 'Regular Store Hours',
+          location: `${businessName} • Chilled Section`,
+          contactDetails: 'EST. 2026',
+          callToAction: 'VISIT IN-STORE TODAY TO REDEEM',
+          finePrint: '*Crafted for silky smooth latte microfoam and dairy-free indulgence.',
+          backgroundColor: '#F9F7ED',
+          primaryColor: '#1B3B22',
+          textColor: '#1B3B22',
+          accentColor: '#2d5a37',
+          mutedTextColor: '#422D1E',
+        }));
+        toast.success('Adapted to Oat Milk Barista (Stock Item)!');
+        break;
+    }
+  };
+
+  const handleRemoveCustomImage = () => {
+    setCustomImage(null);
+    setOriginalImage(null);
+    setCutoutImage(null);
+    setIsCutoutActive(false);
+    setCustomImageName(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    toast.info('Reverted to vector graphic');
+  };
+
+  // AI Poster Regeneration
+  const handleRegenerateWithAI = async (themeOverride?: PosterTheme) => {
+    setIsGeneratingPoster(true);
+    const themeToUse = themeOverride || selectedTheme;
+
+    try {
+      const res = await generatePosterAction({
+        topic: campaign.title || 'Promotional Event',
+        targetItem,
+        businessName,
+        deal: campaign.sampleMessage,
+        stylePreference: themeToUse,
+      });
+
+      if (res.ok && res.data) {
+        setPoster(res.data);
+        setSelectedTheme(res.data.theme);
+        toast.success('AI Poster adapted with clean typography!');
+      } else {
+        const fallback = generateFallbackPosterDesign({
+          topic: campaign.title || 'Promotional Event',
+          targetItem,
+          businessName,
+          deal: campaign.sampleMessage,
+          stylePreference: themeToUse,
+        });
+        setPoster(fallback);
+        toast.info('Applied clean editorial style template');
+      }
+    } catch (err) {
+      console.error('Error generating poster:', err);
+      const fallback = generateFallbackPosterDesign({
+        topic: campaign.title || 'Promotional Event',
+        targetItem,
+        businessName,
+        deal: campaign.sampleMessage,
+        stylePreference: themeToUse,
+      });
+      setPoster(fallback);
+      toast.info('Applied clean editorial style template');
+    } finally {
+      setIsGeneratingPoster(false);
+    }
+  };
+
+  // Download High-Resolution Vertical A3 Poster (2400 x 3394 px print-ready PNG)
+  const handleDownloadA3PNG = () => {
     if (!svgRef.current) return;
     setIsDownloading(true);
 
@@ -78,21 +416,28 @@ export function SocialCampaignDialog({
       const image = new Image();
       image.onload = () => {
         const canvas = document.createElement('canvas');
-        canvas.width = 1080;
-        canvas.height = 1080;
+        canvas.width = 2400;
+        canvas.height = 3394;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(image, 0, 0, 1080, 1080);
-          const pngUrl = canvas.toDataURL('image/png');
+          ctx.fillStyle = poster.backgroundColor || '#F9F7ED';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, 0, 0, 2400, 3394);
+          const pngUrl = canvas.toDataURL('image/png', 1.0);
           const downloadLink = document.createElement('a');
           downloadLink.href = pngUrl;
-          downloadLink.download = `${targetItem.toLowerCase().replace(/\s+/g, '-')}-promo-poster.png`;
+          downloadLink.download = `${targetItem.toLowerCase().replace(/[^a-z0-9]/g, '-')}-a3-poster.png`;
           document.body.appendChild(downloadLink);
           downloadLink.click();
           document.body.removeChild(downloadLink);
           URL.revokeObjectURL(blobURL);
-          toast.success('Promotional poster downloaded successfully (1080x1080 PNG)!');
+          toast.success('Print-ready Vertical A3 Poster downloaded (2400×3394 PNG)!');
         }
+        setIsDownloading(false);
+      };
+      image.onerror = (err) => {
+        console.error('Canvas draw error:', err);
+        toast.error('Could not render high-res poster image');
         setIsDownloading(false);
       };
       image.src = blobURL;
@@ -103,180 +448,830 @@ export function SocialCampaignDialog({
     }
   };
 
+  // Download Vector SVG
+  const handleDownloadSVG = () => {
+    if (!svgRef.current) return;
+    try {
+      const svgElement = svgRef.current;
+      const svgString = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const URL = window.URL || window.webkitURL || window;
+      const blobURL = URL.createObjectURL(svgBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = blobURL;
+      downloadLink.download = `${targetItem.toLowerCase().replace(/[^a-z0-9]/g, '-')}-a3-poster.svg`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      URL.revokeObjectURL(blobURL);
+      toast.success('Vector A3 Poster SVG downloaded!');
+    } catch {
+      toast.error('Could not export SVG');
+    }
+  };
+
+  // Direct Browser Print
+  const handlePrintPoster = () => {
+    if (!svgRef.current) return;
+    const svgElement = svgRef.current;
+    const svgString = new XMLSerializer().serializeToString(svgElement);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Pop-up was blocked. Please allow pop-ups to print.');
+      return;
+    }
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${headline} - Print Poster</title>
+          <style>
+            @page { size: A3 portrait; margin: 0; }
+            body { margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
+            svg { width: 100vw; height: 100vh; max-width: 100%; max-height: 100%; }
+          </style>
+        </head>
+        <body>
+          ${svgString}
+          <script>
+            window.onload = function() {
+              window.focus();
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[620px] p-0 overflow-hidden border border-border/80 rounded-xl shadow-2xl">
-        <DialogHeader className="p-4 sm:p-5 border-b border-border/40 bg-muted/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20">
+      <DialogContent className="sm:max-w-[1140px] lg:max-w-[1280px] w-[96vw] h-[92vh] max-h-[95vh] p-0 overflow-hidden border border-border/80 rounded-2xl shadow-2xl flex flex-col bg-background">
+        {/* Top Header Bar */}
+        <DialogHeader className="p-3.5 sm:p-4 border-b border-border/60 bg-muted/20 shrink-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
                 <Share2 className="w-4 h-4" />
               </div>
               <div>
-                <DialogTitle className="text-base font-bold flex items-center gap-2">
-                  <span>Social Media Campaign Kit</span>
-                  <Badge variant="outline" className="text-[10px] uppercase font-semibold text-blue-600 border-blue-500/30">
-                    Facebook & Instagram
+                <DialogTitle className="text-sm sm:text-base font-bold flex items-center gap-2">
+                  <span>Marketing Campaign &amp; Poster Studio</span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-semibold text-primary border-primary/30 bg-primary/5 uppercase"
+                  >
+                    A3 Print-Ready • 300 DPI
                   </Badge>
                 </DialogTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Ready-to-post Facebook caption and high-res promotional flyer graphic.
+                  Clean editorial typography, automatic product background cutout, and print-ready export.
                 </p>
               </div>
+            </div>
+
+            {/* Quick Export Actions in Header */}
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <Button
+                size="sm"
+                onClick={handleDownloadA3PNG}
+                disabled={isDownloading}
+                className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>{isDownloading ? 'Exporting...' : 'Download A3 PNG'}</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadSVG}
+                className="h-8 text-xs font-medium gap-1 cursor-pointer"
+              >
+                <FileCode className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">SVG</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrintPoster}
+                className="h-8 text-xs font-medium gap-1 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Print</span>
+              </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          <Tabs defaultValue="caption" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-9 p-1 bg-muted/60 rounded-lg">
-              <TabsTrigger value="caption" className="text-xs font-semibold gap-1.5">
-                <span>Facebook Post Caption</span>
-              </TabsTrigger>
-              <TabsTrigger value="poster" className="text-xs font-semibold gap-1.5">
+        {/* Tab Selector */}
+        <div className="px-4 pt-2.5 shrink-0 border-b border-border/40 bg-muted/10">
+          <Tabs
+            value={activeTab}
+            onValueChange={(val) => setActiveTab(val as 'poster' | 'caption')}
+            className="w-full"
+          >
+            <TabsList className="grid w-full max-w-[460px] grid-cols-2 h-10 p-1 bg-muted/40 rounded-xl border border-border/70">
+              <TabsTrigger
+                value="poster"
+                className="text-xs font-semibold gap-1.5 cursor-pointer rounded-lg border-2 border-transparent data-[state=active]:border-[#422D1E] data-[state=active]:bg-background data-[state=active]:text-[#422D1E] data-[state=active]:shadow-xs transition-all hover:border-[#422D1E]/30"
+              >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Visual Promotional Poster</span>
+                <span>Visual A3 Poster Studio</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="caption"
+                className="text-xs font-semibold gap-1.5 cursor-pointer rounded-lg border-2 border-transparent data-[state=active]:border-[#422D1E] data-[state=active]:bg-background data-[state=active]:text-[#422D1E] data-[state=active]:shadow-xs transition-all hover:border-[#422D1E]/30"
+              >
+                <span>Social Post Caption</span>
               </TabsTrigger>
             </TabsList>
+          </Tabs>
+        </div>
 
-            {/* TAB 1: Facebook Post Caption */}
-            <TabsContent value="caption" className="space-y-4 pt-3">
-              {/* Facebook Feed Post Mockup Card */}
-              <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm">
-                {/* Mock Facebook Header */}
-                <div className="p-3.5 flex items-center gap-3 border-b border-border/40 bg-muted/10">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                    {businessName.slice(0, 1).toUpperCase()}
+        {/* Main Body */}
+        <div className="flex-1 overflow-hidden p-3 sm:p-5">
+          {activeTab === 'poster' ? (
+            /* ========================================================================= */
+            /* TWO-PANEL STUDIO LAYOUT: Left Controls (42%) + Right Live Canvas (58%)    */
+            /* ========================================================================= */
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-full overflow-hidden">
+              {/* LEFT COLUMN: Organized, Intuitive Studio Navigation */}
+              <div className="lg:col-span-5 flex flex-col gap-3.5 overflow-y-auto pr-1 h-full scrollbar-thin">
+                {/* 1. SHOP STOCK PRESETS (Instant 1-click adaptation to real inventory) */}
+                <div className="p-3.5 rounded-xl border border-border/70 bg-card shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                      <Store className="w-3.5 h-3.5 text-primary" />
+                      <span>In-Stock Product Presets</span>
+                    </span>
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                      1-Click Adapt
+                    </Badge>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-foreground leading-none">{businessName}</p>
-                    <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                      <span>Just now</span> • <span>🌎</span>
-                    </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStockPreset('avocado')}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border/70 bg-muted/30 hover:bg-primary/10 hover:border-primary/50 text-foreground transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>🥑 Avocado Toast</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStockPreset('matcha')}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border/70 bg-muted/30 hover:bg-primary/10 hover:border-primary/50 text-foreground transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>🍵 Matcha Green Tea</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStockPreset('espresso')}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border/70 bg-muted/30 hover:bg-primary/10 hover:border-primary/50 text-foreground transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>☕ Espresso Beans</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStockPreset('sourdough')}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border/70 bg-muted/30 hover:bg-primary/10 hover:border-primary/50 text-foreground transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>🍞 Artisan Sourdough</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectStockPreset('oatmilk')}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border/70 bg-muted/30 hover:bg-primary/10 hover:border-primary/50 text-foreground transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>🥛 Barista Oat Milk</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Caption Body */}
-                <div className="p-4 font-sans text-xs sm:text-sm text-foreground whitespace-pre-wrap leading-relaxed select-all bg-muted/5">
-                  {caption}
+                {/* 2. PRODUCT IMAGE UPLOAD & BACKGROUND REMOVAL */}
+                <div className="p-3.5 rounded-xl border border-border/70 bg-card shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                      <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                      <span>Custom Product Cutout</span>
+                    </span>
+                    {customImage && (
+                      <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">
+                        {customImageName || 'Product photo'}
+                      </span>
+                    )}
+                  </div>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/avif"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+
+                  {!customImage ? (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-primary/30 hover:border-primary/70 bg-muted/20 hover:bg-muted/40 p-3.5 rounded-xl text-center cursor-pointer transition-colors"
+                    >
+                      <ImagePlus className="w-5 h-5 text-primary mx-auto mb-1 opacity-80" />
+                      <p className="text-xs font-semibold text-foreground">Click to upload product photo</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        PNG, JPG, or WEBP. Background removed automatically!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between bg-muted/40 p-2 rounded-lg border border-border/50 text-xs">
+                        <div className="flex items-center gap-2 truncate">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="font-medium truncate">{customImageName || 'Uploaded Product'}</span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => fileInputRef.current?.click()}
+                            title="Change photo"
+                            className="w-6 h-6 text-muted-foreground hover:text-foreground cursor-pointer"
+                          >
+                            <Upload className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleRemoveCustomImage}
+                            title="Remove photo"
+                            className="w-6 h-6 text-rose-500 hover:text-rose-600 cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Tolerance & Sensitivity Slider */}
+                      <div className="p-2.5 rounded-lg bg-muted/30 border border-border/40 space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <SlidersHorizontal className="w-3 h-3" />
+                            <span>Cutout Sensitivity (Tolerance)</span>
+                          </span>
+                          <span className="font-semibold text-foreground">{tolerance}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="15"
+                            max="85"
+                            step="5"
+                            value={tolerance}
+                            onChange={(e) => setTolerance(Number(e.target.value))}
+                            className="w-full accent-primary h-1.5 bg-muted rounded-lg cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex justify-between text-[9px] text-muted-foreground px-0.5">
+                          <span>Soft (25)</span>
+                          <span>Balanced (45)</span>
+                          <span>Crisp (70)</span>
+                        </div>
+                      </div>
+
+                      {/* Background Removal Action Bar */}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleRemoveBackground()}
+                          disabled={isRemovingBg}
+                          className="flex-1 h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-xs"
+                        >
+                          <Wand2 className={`w-3.5 h-3.5 ${isRemovingBg ? 'animate-spin' : ''}`} />
+                          <span>{isRemovingBg ? 'Removing Background...' : '✨ Remove Background (Cutout)'}</span>
+                        </Button>
+
+                        {cutoutImage && originalImage && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleToggleCutout}
+                            className="h-8 text-xs font-medium gap-1 cursor-pointer"
+                            title="Toggle between original photo and transparent cutout"
+                          >
+                            <Layers className="w-3.5 h-3.5" />
+                            <span>{isCutoutActive ? 'Original' : 'Cutout'}</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. POSTER TYPOGRAPHY & EDITORIAL CONTENT */}
+                <div className="p-3.5 rounded-xl border border-border/70 bg-card shadow-xs space-y-3">
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                    <Type className="w-3.5 h-3.5 text-primary" />
+                    <span>Editorial Typography &amp; Content</span>
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Bold Headline</Label>
+                      <Input
+                        value={poster.headline}
+                        onChange={(e) => setPoster((p) => ({ ...p, headline: e.target.value }))}
+                        className="h-8 text-xs font-bold"
+                        placeholder="e.g. CEREMONIAL GRADE"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Cursive Subtitle</Label>
+                      <Input
+                        value={poster.subheadline}
+                        onChange={(e) => setPoster((p) => ({ ...p, subheadline: e.target.value }))}
+                        className="h-8 text-xs italic"
+                        placeholder="e.g. Matcha Green Tea"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Top Left Kicker Tag</Label>
+                      <Input
+                        value={poster.category}
+                        onChange={(e) => setPoster((p) => ({ ...p, category: e.target.value }))}
+                        className="h-8 text-xs"
+                        placeholder="e.g. SHADE GROWN"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Bottom Right Value Tag</Label>
+                      <Input
+                        value={poster.offerHighlight}
+                        onChange={(e) => setPoster((p) => ({ ...p, offerHighlight: e.target.value }))}
+                        className="h-8 text-xs"
+                        placeholder="e.g. FIRST HARVEST"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-[11px] text-muted-foreground">Provenance / Story Tagline</Label>
+                      <Input
+                        value={poster.productDescription}
+                        onChange={(e) => setPoster((p) => ({ ...p, productDescription: e.target.value }))}
+                        className="h-8 text-xs"
+                        placeholder="e.g. TRADITIONAL STONE MILLED • 100% ORGANIC"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Schedule / Batch</Label>
+                      <Input
+                        value={poster.eventDates}
+                        onChange={(e) => setPoster((p) => ({ ...p, eventDates: e.target.value }))}
+                        className="h-8 text-xs"
+                        placeholder="e.g. Weekend Batch"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Store Hours</Label>
+                      <Input
+                        value={poster.eventTime}
+                        onChange={(e) => setPoster((p) => ({ ...p, eventTime: e.target.value }))}
+                        className="h-8 text-xs"
+                        placeholder="e.g. 8:00 AM – 7:00 PM"
+                      />
+                    </div>
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-[11px] text-muted-foreground">Call To Action</Label>
+                      <Input
+                        value={poster.callToAction}
+                        onChange={(e) => setPoster((p) => ({ ...p, callToAction: e.target.value }))}
+                        className="h-8 text-xs font-semibold"
+                        placeholder="e.g. VISIT IN-STORE TODAY TO REDEEM"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. VISUAL TONE & THEME PALETTE */}
+                <div className="p-3.5 rounded-xl border border-border/70 bg-card shadow-xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                      <Palette className="w-3.5 h-3.5 text-primary" />
+                      <span>Visual Tone &amp; Palette</span>
+                    </span>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleRegenerateWithAI()}
+                      disabled={isGeneratingPoster}
+                      className="h-7 text-[11px] font-semibold gap-1 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer shadow-xs px-2.5"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isGeneratingPoster ? 'animate-spin' : ''}`} />
+                      <span>{isGeneratingPoster ? 'Designing...' : 'Regenerate with AI'}</span>
+                    </Button>
+                  </div>
+
+                  <Select
+                    value={selectedTheme}
+                    onValueChange={(val) => {
+                      const nextTheme = val as PosterTheme;
+                      setSelectedTheme(nextTheme);
+                      handleRegenerateWithAI(nextTheme);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs w-full">
+                      <SelectValue placeholder="Style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="editorial-fresh">Warm Linen Cream (Avocado Reference)</SelectItem>
+                      <SelectItem value="dark-luxury">Espresso Brown (#422D1E)</SelectItem>
+                      <SelectItem value="fresh-organic">Forest Sage &amp; Botanical</SelectItem>
+                      <SelectItem value="modern-minimal">Modern Minimalist Stone</SelectItem>
+                      <SelectItem value="bold-creative">Warm Amber &amp; Crimson</SelectItem>
+                      <SelectItem value="vibrant-editorial">Editorial Mint Spruce</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-1">
-                <Button
-                  onClick={handleCopyCaption}
-                  className="w-full sm:w-auto h-9 gap-1.5 font-semibold text-xs bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-sm"
+              {/* RIGHT COLUMN: Live Clean A3 Poster Canvas Preview (1 Card only! Full-bleed, borderless!) */}
+              <div className="lg:col-span-7 flex flex-col items-center justify-center bg-muted/20 p-2 sm:p-4 rounded-2xl border border-border/60 overflow-hidden h-full">
+                <div
+                  className="h-full max-h-[78vh] aspect-[1200/1697] rounded-xl overflow-hidden shadow-2xl ring-1 ring-black/10 flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: poster.backgroundColor || '#F9F7ED' }}
                 >
-                  {copiedCaption ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedCaption ? 'Copied to Clipboard!' : 'Copy Full Facebook Caption'}</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="w-full sm:w-auto h-9 gap-1.5 text-xs font-medium cursor-pointer"
-                >
-                  <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">
-                    <span>Open Facebook</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </Button>
-              </div>
-            </TabsContent>
-
-            {/* TAB 2: Visual Promotional Poster */}
-            <TabsContent value="poster" className="space-y-4 pt-3">
-              <div className="flex items-center justify-center bg-muted/20 p-2 sm:p-4 rounded-xl border border-border/60">
-                {/* Scalable High-Res SVG Poster Graphic (1080x1080 Aspect Ratio) */}
-                <div className="w-full max-w-[340px] aspect-square rounded-xl overflow-hidden shadow-xl ring-1 ring-border/80">
                   <svg
                     ref={svgRef}
-                    viewBox="0 0 1080 1080"
-                    width="100%"
-                    height="100%"
+                    viewBox="0 0 1200 1697"
+                    className="w-full h-full block select-none font-sans"
                     xmlns="http://www.w3.org/2000/svg"
+                    xmlnsXlink="http://www.w3.org/1999/xlink"
                   >
                     <defs>
-                      <linearGradient id="posterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#0f172a" />
-                        <stop offset="50%" stopColor="#1e1b4b" />
-                        <stop offset="100%" stopColor="#311042" />
-                      </linearGradient>
-                      <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#f43f5e" />
-                        <stop offset="100%" stopColor="#fb7185" />
-                      </linearGradient>
-                      <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#fbbf24" />
-                        <stop offset="100%" stopColor="#f59e0b" />
-                      </linearGradient>
+                      {/* Realistic Soft Diffused Ground Drop Shadow for floating transparent cutouts */}
+                      <filter id="cleanGroundBlur" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="18" />
+                      </filter>
                     </defs>
 
-                    {/* Dark Premium Gradient Background */}
-                    <rect width="1080" height="1080" fill="url(#posterGrad)" />
+                    {/* Canvas Background: Pure Full-Bleed Edge-to-Edge */}
+                    <rect width="1200" height="1697" fill={poster.backgroundColor || '#F9F7ED'} />
 
-                    {/* Decorative Geometric Rings */}
-                    <circle cx="540" cy="540" r="460" fill="none" stroke="#6366f1" strokeWidth="2" opacity="0.2" />
-                    <circle cx="540" cy="540" r="500" fill="none" stroke="#ec4899" strokeWidth="2" opacity="0.15" />
-
-                    {/* Store Header */}
-                    <rect x="140" y="80" width="800" height="70" rx="35" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" />
-                    <text x="540" y="126" textAnchor="middle" fill="#f8fafc" fontSize="32" fontWeight="700" fontFamily="system-ui, sans-serif" letterSpacing="4">
-                      {businessName.toUpperCase()} • OFFICIAL OFFER
-                    </text>
-
-                    {/* Deal Badge */}
-                    <g transform="translate(540, 260)">
-                      <rect x="-240" y="-45" width="480" height="90" rx="45" fill="url(#badgeGrad)" />
-                      <text x="0" y="16" textAnchor="middle" fill="#ffffff" fontSize="42" fontWeight="900" fontFamily="system-ui, sans-serif" letterSpacing="3">
-                        ⚡ {promoBadge.toUpperCase()}
+                    {/* 1. TOP HEADER: STORE BRAND & SELECTION */}
+                    <g transform="translate(600, 95)">
+                      <text
+                        x="0"
+                        y="0"
+                        textAnchor="middle"
+                        fill={poster.primaryColor || '#1B3B22'}
+                        fontSize="20"
+                        fontWeight="700"
+                        letterSpacing="6"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {businessName.toUpperCase()} • SELECTION
                       </text>
                     </g>
 
-                    {/* Main Headline */}
-                    <text x="540" y="420" textAnchor="middle" fill="#fbbf24" fontSize="62" fontWeight="900" fontFamily="system-ui, sans-serif" letterSpacing="2">
-                      {headline.length > 25 ? headline.slice(0, 25) + '...' : headline}
-                    </text>
+                    {/* 2. MAIN BOLD CONDENSED HEADLINE (Giant Editorial Impact) */}
+                    <g transform="translate(600, 210)">
+                      <text
+                        x="0"
+                        y="0"
+                        textAnchor="middle"
+                        fill={poster.primaryColor || '#1B3B22'}
+                        fontSize={
+                          headline.length > 20
+                            ? '86'
+                            : headline.length > 14
+                            ? '102'
+                            : '120'
+                        }
+                        fontWeight="900"
+                        letterSpacing="3"
+                        fontFamily="Impact, 'Arial Black', -apple-system, sans-serif"
+                      >
+                        {headline}
+                      </text>
+                    </g>
 
-                    {/* Product Box */}
-                    <rect x="120" y="480" width="840" height="260" rx="32" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.18)" />
-                    <text x="540" y="570" textAnchor="middle" fill="#ffffff" fontSize="52" fontWeight="800" fontFamily="system-ui, sans-serif">
-                      {targetItem}
-                    </text>
-                    <text x="540" y="650" textAnchor="middle" fill="#cbd5e1" fontSize="30" fontWeight="500" fontFamily="system-ui, sans-serif">
-                      {campaign.sampleMessage.slice(0, 60)}
-                    </text>
+                    {/* 3. SUBTITLE: PAIRING CONTRASTING SCRIPT ACCENT WITH DELICATE MOTIFS */}
+                    <g transform="translate(600, 290)">
+                      {/* Left Ornament: Delicate Intersecting Rings */}
+                      <g transform="translate(-320, -14)">
+                        <circle cx="-12" cy="0" r="16" fill="none" stroke={poster.primaryColor} strokeWidth="2.5" />
+                        <circle cx="12" cy="0" r="16" fill="none" stroke={poster.primaryColor} strokeWidth="2.5" />
+                      </g>
 
-                    {/* Urgency Pill */}
-                    <rect x="290" y="790" width="500" height="60" rx="30" fill="rgba(244,63,94,0.18)" stroke="#f43f5e" strokeWidth="2" />
-                    <text x="540" y="832" textAnchor="middle" fill="#fda4af" fontSize="26" fontWeight="700" fontFamily="system-ui, sans-serif">
-                      ⏳ LIMITED TIME • WHILE SUPPLIES LAST
-                    </text>
+                      {/* Cursive Subtitle */}
+                      <text
+                        x="0"
+                        y="2"
+                        textAnchor="middle"
+                        fill={poster.primaryColor || '#1B3B22'}
+                        fontSize="54"
+                        fontStyle="italic"
+                        fontWeight="600"
+                        fontFamily="'Brush Script MT', 'Baskerville', 'Playfair Display', Georgia, serif"
+                      >
+                        {poster.subheadline || 'Healthy Choice'}
+                      </text>
 
-                    {/* Store CTA Footer */}
-                    <rect x="80" y="890" width="920" height="110" rx="28" fill="url(#goldGrad)" />
-                    <text x="540" y="960" textAnchor="middle" fill="#0f172a" fontSize="36" fontWeight="900" fontFamily="system-ui, sans-serif">
-                      {cta.length > 42 ? cta.slice(0, 42) + '...' : cta}
-                    </text>
+                      {/* Right Ornament: Minimalist Parallel Rules */}
+                      <g transform="translate(250, -22)">
+                        <line x1="0" y1="0" x2="60" y2="0" stroke={poster.primaryColor} strokeWidth="2" />
+                        <line x1="0" y1="8" x2="60" y2="8" stroke={poster.primaryColor} strokeWidth="2" />
+                        <line x1="0" y1="16" x2="60" y2="16" stroke={poster.primaryColor} strokeWidth="2" />
+                        <line x1="0" y1="24" x2="60" y2="24" stroke={poster.primaryColor} strokeWidth="2" />
+                        <line x1="0" y1="32" x2="60" y2="32" stroke={poster.primaryColor} strokeWidth="2" />
+                      </g>
+                    </g>
+
+                    {/* 4. UPPER CORNER ANNOTATION TAGS (Spacious, safe margins far from product) */}
+                    <g transform="translate(100, 390)">
+                      <text
+                        x="0"
+                        y="0"
+                        fill={poster.primaryColor || '#1B3B22'}
+                        fontSize="22"
+                        fontWeight="900"
+                        letterSpacing="3"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {poster.category ? poster.category.slice(0, 26).toUpperCase() : 'CRAFT SELECTION'}
+                      </text>
+                    </g>
+
+                    <g transform="translate(1100, 940)">
+                      <text
+                        x="0"
+                        y="0"
+                        textAnchor="end"
+                        fill={poster.primaryColor || '#1B3B22'}
+                        fontSize="22"
+                        fontWeight="900"
+                        letterSpacing="3"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {poster.offerHighlight ? poster.offerHighlight.slice(0, 30).toUpperCase() : 'SIMPLE TASTE'}
+                      </text>
+                    </g>
+
+                    {/* 5. HERO PRODUCT STAGE: NO BORDER BOX! OPEN, AIRY CANVAS */}
+                    <g transform="translate(0, 80)">
+                      {customImage ? (
+                        <g>
+                          {/* Realistic Soft Diffused Ground Drop Shadow */}
+                          <ellipse
+                            cx="600"
+                            cy="800"
+                            rx="380"
+                            ry="30"
+                            fill="rgba(66, 45, 30, 0.22)"
+                            filter="url(#cleanGroundBlur)"
+                          />
+                          <ellipse
+                            cx="600"
+                            cy="796"
+                            rx="280"
+                            ry="18"
+                            fill="rgba(66, 45, 30, 0.30)"
+                            filter="blur(10px)"
+                          />
+
+                          {/* Seamless Floating Product Image (No Inner Border!) */}
+                          <image
+                            href={customImage}
+                            xlinkHref={customImage}
+                            x="120"
+                            y="360"
+                            width="960"
+                            height="490"
+                            preserveAspectRatio="xMidYMid meet"
+                          />
+                        </g>
+                      ) : (
+                        /* Default Minimal Vector Silhouette if no photo uploaded */
+                        <g>
+                          <ellipse cx="600" cy="790" rx="340" ry="26" fill="rgba(66, 45, 30, 0.20)" filter="url(#cleanGroundBlur)" />
+                          <g transform="translate(600, 580) scale(1.7)">
+                            <path
+                              d="M -130 -20 C -140 -70, -70 -95, 0 -90 C 70 -95, 140 -70, 130 -20 C 120 45, -120 45, -130 -20 Z"
+                              fill="#c49a6c"
+                              stroke="#8b5e34"
+                              strokeWidth="4"
+                            />
+                            <path
+                              d="M -110 -20 C -120 -60, -60 -75, 0 -70 C 60 -75, 120 -60, 110 -20 C 100 30, -100 30, -110 -20 Z"
+                              fill="#70a340"
+                            />
+                            <ellipse cx="10" cy="-20" rx="44" ry="32" fill="#ffffff" />
+                            <ellipse cx="15" cy="-20" rx="24" ry="20" fill="#f59e0b" />
+                          </g>
+                        </g>
+                      )}
+                    </g>
+
+                    {/* 6. CLEAN TYPOGRAPHIC INFORMATION ROW (NO BORDERED BOXES! NO EMOJIS!) */}
+                    <g transform="translate(60, 1020)">
+                      {/* Hairline Top Divider */}
+                      <line
+                        x1="40"
+                        y1="0"
+                        x2="1040"
+                        y2="0"
+                        stroke={poster.primaryColor}
+                        strokeOpacity="0.18"
+                        strokeWidth="1.5"
+                      />
+
+                      {/* Deal / Offer Callout (Clean, high-legibility bold typography) */}
+                      <text
+                        x="540"
+                        y="50"
+                        textAnchor="middle"
+                        fill={poster.primaryColor || '#1B3B22'}
+                        fontSize="32"
+                        fontWeight="900"
+                        letterSpacing="1.5"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {poster.badge || 'SPECIAL OFFER AVAILABLE IN-STORE'}
+                      </text>
+
+                      {/* Hairline Middle Divider */}
+                      <line
+                        x1="40"
+                        y1="85"
+                        x2="1040"
+                        y2="85"
+                        stroke={poster.primaryColor}
+                        strokeOpacity="0.18"
+                        strokeWidth="1.5"
+                      />
+
+                      {/* Clean 3-Column Typographic Schedule / Location Grid */}
+                      <g transform="translate(0, 140)">
+                        {/* Col 1: Schedule */}
+                        <g transform="translate(60, 0)">
+                          <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
+                            SCHEDULE
+                          </text>
+                          <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
+                            {poster.eventDates ? poster.eventDates.slice(0, 26) : 'Limited Batch Special'}
+                          </text>
+                        </g>
+
+                        {/* Col 2: Hours */}
+                        <g transform="translate(420, 0)">
+                          <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
+                            HOURS
+                          </text>
+                          <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
+                            {poster.eventTime ? poster.eventTime.slice(0, 24) : 'Regular Store Hours'}
+                          </text>
+                        </g>
+
+                        {/* Col 3: Location */}
+                        <g transform="translate(760, 0)">
+                          <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
+                            LOCATION
+                          </text>
+                          <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
+                            {poster.location ? poster.location.slice(0, 26) : `${businessName} Store`}
+                          </text>
+                        </g>
+                      </g>
+                    </g>
+
+                    {/* 7. FOOTER MOTTO & BADGES */}
+                    <g transform="translate(60, 1380)">
+                      {/* Starburst Glyph */}
+                      <g transform="translate(70, 0) scale(1.4)">
+                        <path
+                          d="M 0 -18 L 0 18 M -18 0 L 18 0 M -12 -12 L 12 12 M -12 12 L 12 -12"
+                          stroke={poster.primaryColor || '#1B3B22'}
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                        />
+                      </g>
+
+                      {/* Center Provenance Tagline */}
+                      <text
+                        x="540"
+                        y="6"
+                        textAnchor="middle"
+                        fill={poster.primaryColor || '#1B3B22'}
+                        fontSize="23"
+                        fontWeight="800"
+                        letterSpacing="3"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {poster.productDescription
+                          ? poster.productDescription.slice(0, 48).toUpperCase()
+                          : 'NATURAL INGREDIENTS • HOUSE RECIPES'}
+                      </text>
+
+                      {/* Right Oval Pill Badge: EST. 2026 */}
+                      <g transform="translate(930, -18)">
+                        <rect
+                          x="0"
+                          y="0"
+                          width="120"
+                          height="44"
+                          rx="22"
+                          fill="none"
+                          stroke={poster.primaryColor || '#1B3B22'}
+                          strokeWidth="2"
+                        />
+                        <text
+                          x="60"
+                          y="28"
+                          textAnchor="middle"
+                          fill={poster.primaryColor || '#1B3B22'}
+                          fontSize="16"
+                          fontWeight="800"
+                          letterSpacing="1"
+                          fontFamily="system-ui, -apple-system, sans-serif"
+                        >
+                          EST. 2026
+                        </text>
+                      </g>
+                    </g>
+
+                    {/* 8. HIGH-CONTRAST CLEAN CALL TO ACTION FOOTER BAR (NO EMOJIS!) */}
+                    <g transform="translate(60, 1460)">
+                      <rect
+                        x="40"
+                        y="0"
+                        width="1000"
+                        height="85"
+                        rx="18"
+                        fill={poster.primaryColor || '#1B3B22'}
+                      />
+                      <text
+                        x="540"
+                        y="52"
+                        textAnchor="middle"
+                        fill={poster.backgroundColor || '#F9F7ED'}
+                        fontSize="28"
+                        fontWeight="900"
+                        letterSpacing="3"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {poster.callToAction || 'VISIT IN-STORE TODAY TO REDEEM'}
+                      </text>
+                    </g>
+
+                    {/* Fine Print Note */}
+                    <g transform="translate(600, 1590)">
+                      <text
+                        x="0"
+                        y="0"
+                        textAnchor="middle"
+                        fill={poster.mutedTextColor || '#422D1E'}
+                        fontSize="15"
+                        fontWeight="500"
+                        opacity="0.75"
+                        fontFamily="system-ui, -apple-system, sans-serif"
+                      >
+                        {poster.finePrint || '*Handcrafted daily with fresh locally sourced ingredients. While supplies last.'}
+                      </text>
+                    </g>
                   </svg>
                 </div>
               </div>
-
-              {/* Download Action */}
-              <div className="flex items-center justify-between pt-1">
-                <Button
-                  onClick={handleDownloadPoster}
-                  disabled={isDownloading}
-                  className="w-full h-9 gap-1.5 font-semibold text-xs bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-sm"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>{isDownloading ? 'Generating 1080x1080 PNG...' : 'Download Poster (1080x1080 PNG)'}</span>
-                </Button>
+            </div>
+          ) : (
+            /* ========================================================================= */
+            /* TAB 2: Clean Social Caption (Ready to Copy for Telegram, FB, Instagram)   */
+            /* ========================================================================= */
+            <div className="flex flex-col gap-4 max-w-2xl mx-auto py-4">
+              <div className="p-4 rounded-xl border border-border/70 bg-card shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Copyable Campaign Post Text
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={handleCopyCaption}
+                    className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                  >
+                    {copiedCaption ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedCaption ? 'Copied!' : 'Copy Caption'}</span>
+                  </Button>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/40 border border-border/50 text-xs font-mono leading-relaxed whitespace-pre-wrap select-all">
+                  {caption}
+                </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

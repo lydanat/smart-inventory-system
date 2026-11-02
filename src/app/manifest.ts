@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       'Autonomous multi-tenant inventory management system with Telegram alerts and Gemini AI advice.',
     start_url: '/dashboard',
     display: 'standalone',
-    background_color: '#09090b',
-    theme_color: '#09090b',
+    background_color: '#422D1E',
+    theme_color: '#422D1E',
     icons: [
       {
         src: '/icon.png',

@@ -215,13 +215,13 @@ export function generateRulesFallback(
       channel: 'in-store sign' as const,
       sampleMessage: hasExpiring
         ? `Freshness Special: Take 25% off ${item1} today only! Grab top quality at our lowest price.`
-        : `Pair & Save: Buy ${item1} today and enjoy 15% off any complementary pairing item!`,
+        : `Special Bundle: Purchase ${item1} today and enjoy 15% savings on any complementary item!`,
       promoBadge: hasExpiring ? 'SAVE 25%' : 'BUNDLE DEAL',
-      posterHeadline: hasExpiring ? 'FRESHNESS CLEARANCE SALE' : 'CHEF’S PAIRING SPECIAL',
+      posterHeadline: hasExpiring ? 'FRESHNESS CLEARANCE SALE' : 'CURATED PAIRING SPECIAL',
       callToAction: 'Visit in-store today while supplies last!',
       facebookCaption: hasExpiring
         ? `🌿 FRESHNESS SPECIAL: 25% OFF ${item1.toUpperCase()}! 🌿\n\nStock up on premium fresh quality before our new batch arrives. Enjoy 25% off ${item1} all day today!\n\n📍 Visit us in-store today or message our page to reserve yours now.\n\n#FreshDeals #SpecialDiscount #${item1.replace(/\s+/g, '')} #ShopLocal`
-        : `🍽️ PAIR & SAVE COMBO DEAL! 🍽️\n\nDinner made simple! Grab ${item1} today and enjoy 15% off any complementary pairing item at checkout. Quality food, unbeatable value.\n\n📍 Stop by our store today or send us a message!\n\n#DinnerIdeas #ComboDeal #FoodLovers #ShopLocal`,
+        : `🍽️ CURATED PAIRING COMBO DEAL! 🍽️\n\nDinner made simple! Grab ${item1} today and enjoy 15% off any complementary pairing item at checkout. Quality food, unbeatable value.\n\n📍 Stop by our store today or send us a message!\n\n#DinnerIdeas #ComboDeal #FoodLovers #ShopLocal`,
       hashtags: ['#SpecialOffer', '#ShopLocal', '#GrocerySavings', `#${item1.replace(/[^a-zA-Z0-9]/g, '')}`],
     },
     {

@@ -289,7 +289,7 @@ export function AIInsightsCard({
                       <Button
                         size="xs"
                         variant="default"
-                        className="h-7 text-[11px] font-medium gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                        className="h-7 text-[11px] font-medium gap-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer"
                         onClick={() => handleOpenRestock(item.itemName, item.suggestedQuantity)}
                       >
                         <PackagePlus className="w-3 h-3" />
@@ -374,7 +374,7 @@ export function AIInsightsCard({
                       <div className="flex items-center gap-1.5">
                         <Button
                           size="xs"
-                          className="h-7 text-[11px] font-semibold gap-1 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
+                          className="h-7 text-[11px] font-semibold gap-1 bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shadow-xs"
                           onClick={() => {
                             setSelectedCampaign(promo);
                             setCampaignDialogOpen(true);
