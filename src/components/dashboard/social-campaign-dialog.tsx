@@ -51,6 +51,254 @@ import { generatePosterAction } from '@/actions/poster';
 import { generateFallbackPosterDesign } from '@/lib/utils/poster-theme';
 import { removeImageBackground } from '@/lib/utils/background-remover';
 
+/**
+ * Renders an accurate, high-fidelity editorial vector visual
+ * dynamically adapted to the specific stock product when no custom photo is uploaded.
+ */
+function renderDefaultProductVisual(targetItem: string, poster: PosterDesign) {
+  const itemLower = (targetItem || '').toLowerCase();
+
+  const isCoffee =
+    itemLower.includes('coffee') ||
+    itemLower.includes('roast') ||
+    itemLower.includes('espresso') ||
+    itemLower.includes('bean');
+
+  const isMatcha =
+    itemLower.includes('matcha') ||
+    itemLower.includes('green tea') ||
+    itemLower.includes('tea');
+
+  const isBakery =
+    itemLower.includes('bread') ||
+    itemLower.includes('sourdough') ||
+    itemLower.includes('loaf') ||
+    itemLower.includes('bakery') ||
+    itemLower.includes('brioche') ||
+    itemLower.includes('bun') ||
+    itemLower.includes('croissant');
+
+  const isDairy =
+    itemLower.includes('milk') ||
+    itemLower.includes('oat') ||
+    itemLower.includes('dairy') ||
+    itemLower.includes('yogurt') ||
+    itemLower.includes('butter');
+
+  const isApple =
+    itemLower.includes('apple') ||
+    itemLower.includes('fruit') ||
+    itemLower.includes('honeycrisp');
+
+  if (isCoffee) {
+    // ☕ 1KG SPECIALTY ESPRESSO ROAST BEANS POUCH & ROASTED BEANS
+    return (
+      <g>
+        {/* Soft realistic ground shadow */}
+        <ellipse cx="600" cy="800" rx="380" ry="32" fill="rgba(66, 45, 30, 0.28)" filter="url(#cleanGroundBlur)" />
+        <ellipse cx="600" cy="796" rx="260" ry="18" fill="rgba(66, 45, 30, 0.35)" filter="blur(8px)" />
+
+        {/* Scattered Roasted Whole Coffee Beans */}
+        <g>
+          {/* Bean 1 (Far Left) */}
+          <ellipse cx="410" cy="795" rx="36" ry="24" transform="rotate(-22 410 795)" fill="#2E1B10" stroke="#170C06" strokeWidth="2.5" />
+          <path d="M 382 793 Q 410 797 438 791" stroke="#120A05" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+
+          {/* Bean 2 (Far Right) */}
+          <ellipse cx="780" cy="790" rx="34" ry="23" transform="rotate(26 780 790)" fill="#3D2517" stroke="#170C06" strokeWidth="2.5" />
+          <path d="M 754 788 Q 780 793 806 789" stroke="#120A05" strokeWidth="4" strokeLinecap="round" fill="none" />
+
+          {/* Bean 3 (Front Left) */}
+          <ellipse cx="480" cy="820" rx="30" ry="20" transform="rotate(38 480 820)" fill="#442817" />
+          <path d="M 460 818 Q 480 824 500 820" stroke="#1A0F08" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+
+          {/* Bean 4 (Front Right) */}
+          <ellipse cx="720" cy="818" rx="32" ry="21" transform="rotate(-16 720 818)" fill="#2E1B10" />
+          <path d="M 698 817 Q 720 820 742 816" stroke="#120A05" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+        </g>
+
+        {/* 1KG Specialty Craft Coffee Pouch (Center) */}
+        <g transform="translate(0, 10)">
+          {/* Pouch Silhouette */}
+          <path d="M 475 420 L 515 320 L 685 320 L 725 420 L 705 775 L 495 775 Z" fill="#24140B" />
+          <path d="M 480 425 L 520 325 L 680 325 L 720 425 L 700 775 L 500 775 Z" fill="#3A2312" stroke="#24140B" strokeWidth="3" />
+
+          {/* Top Seal Fold & Gold Clamp */}
+          <rect x="510" y="310" width="180" height="26" rx="4" fill="#C49A6C" stroke="#8C6834" strokeWidth="2.5" />
+          <line x1="520" y1="323" x2="680" y2="323" stroke="#8C6834" strokeWidth="1.5" />
+
+          {/* Degassing Valve */}
+          <circle cx="600" cy="405" r="14" fill="#24140B" stroke="#C49A6C" strokeWidth="2" />
+          <circle cx="600" cy="405" r="5" fill="#3A2312" />
+
+          {/* Minimalist Kraft Label */}
+          <rect x="522" y="460" width="156" height="250" rx="8" fill="#FDF8E5" stroke="#C49A6C" strokeWidth="2" />
+          <rect x="528" y="466" width="144" height="238" rx="4" fill="none" stroke="#3A2312" strokeWidth="1" strokeOpacity="0.3" />
+
+          {/* Label Typography */}
+          <text x="600" y="498" textAnchor="middle" fill="#3A2312" fontSize="12" fontWeight="900" letterSpacing="3">
+            SPECIALTY ROAST
+          </text>
+          <text x="600" y="535" textAnchor="middle" fill="#1A0F08" fontSize="24" fontWeight="900" letterSpacing="1">
+            ESPRESSO
+          </text>
+          <text x="600" y="558" textAnchor="middle" fill="#78350F" fontSize="11" fontWeight="700" letterSpacing="2">
+            WHOLE BEANS • 1KG
+          </text>
+
+          {/* Coffee Bean Icon on Label */}
+          <g transform="translate(600, 600)">
+            <ellipse cx="0" cy="0" rx="22" ry="15" fill="#3A2312" />
+            <path d="M -15 -1 Q 0 2 15 -2" stroke="#FDF8E5" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          </g>
+
+          <text x="600" y="650" textAnchor="middle" fill="#3A2312" fontSize="11" fontWeight="800" letterSpacing="1">
+            100% ARABICA BLEND
+          </text>
+          <text x="600" y="675" textAnchor="middle" fill="#78350F" fontSize="10" fontWeight="600">
+            SMALL BATCH LOCALLY ROASTED
+          </text>
+        </g>
+
+        {/* Rising Warm Aroma Wisps */}
+        <g opacity="0.65">
+          <path d="M 575 270 Q 560 230 580 190" stroke="#C49A6C" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M 605 260 Q 620 220 600 180" stroke="#C49A6C" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+          <path d="M 630 275 Q 645 235 625 195" stroke="#C49A6C" strokeWidth="3" fill="none" strokeLinecap="round" />
+        </g>
+      </g>
+    );
+  }
+
+  if (isMatcha) {
+    // 🍵 CEREMONIAL MATCHA GREEN TEA CHAWAN BOWL & BAMBOO WHISK
+    return (
+      <g>
+        {/* Soft realistic ground shadow */}
+        <ellipse cx="600" cy="800" rx="380" ry="32" fill="rgba(66, 45, 30, 0.24)" filter="url(#cleanGroundBlur)" />
+        <ellipse cx="600" cy="796" rx="270" ry="18" fill="rgba(66, 45, 30, 0.32)" filter="blur(8px)" />
+
+        {/* Ceramic Chawan Bowl */}
+        <g transform="translate(0, 40)">
+          <path d="M 420 540 C 420 760, 780 760, 780 540 C 780 500, 420 500, 420 540 Z" fill="#2C2723" stroke="#1B1714" strokeWidth="5" />
+          {/* Jade Green Frothy Matcha Tea Surface */}
+          <ellipse cx="600" cy="545" rx="165" ry="42" fill="#3D7026" />
+          <ellipse cx="585" cy="542" rx="135" ry="30" fill="#5C9E33" />
+          {/* Micro-foam froth highlights */}
+          <circle cx="545" cy="538" r="6" fill="#A8D572" opacity="0.8" />
+          <circle cx="615" cy="545" r="5" fill="#A8D572" opacity="0.8" />
+          <circle cx="645" cy="539" r="4" fill="#A8D572" opacity="0.8" />
+          <circle cx="575" cy="547" r="4" fill="#A8D572" opacity="0.8" />
+        </g>
+
+        {/* Bamboo Whisk (Chasen) Resting on the Right */}
+        <g transform="translate(0, 40)">
+          <rect x="740" y="580" width="32" height="110" rx="8" transform="rotate(34 740 580)" fill="#D6B885" stroke="#8C6834" strokeWidth="3" />
+          <path d="M 690 680 Q 725 735 765 765 M 705 670 Q 735 725 780 755" stroke="#D6B885" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+        </g>
+
+        {/* Bamboo Spoon (Chashaku) on Left with jade matcha powder */}
+        <g transform="translate(0, 40)">
+          <path d="M 440 680 Q 400 710 380 760" stroke="#D6B885" strokeWidth="5" fill="none" strokeLinecap="round" />
+          <ellipse cx="380" cy="760" rx="18" ry="10" fill="#5C9E33" />
+        </g>
+      </g>
+    );
+  }
+
+  if (isBakery) {
+    // 🍞 ARTISAN SOURDOUGH BREAD BOULE
+    return (
+      <g>
+        {/* Soft realistic ground shadow */}
+        <ellipse cx="600" cy="800" rx="380" ry="32" fill="rgba(66, 45, 30, 0.24)" filter="url(#cleanGroundBlur)" />
+        <ellipse cx="600" cy="796" rx="270" ry="18" fill="rgba(66, 45, 30, 0.32)" filter="blur(8px)" />
+
+        <g transform="translate(0, 20)">
+          {/* Bread Boule Body */}
+          <path d="M 380 660 C 360 460, 840 460, 820 660 C 810 750, 390 750, 380 660 Z" fill="#C48E56" stroke="#7A4B1A" strokeWidth="5" />
+          {/* Crust Ear & Bloom */}
+          <path d="M 450 540 Q 600 490 750 550" stroke="#5C330E" strokeWidth="16" fill="none" strokeLinecap="round" />
+          <path d="M 465 543 Q 600 498 735 553" stroke="#E6BF83" strokeWidth="8" fill="none" strokeLinecap="round" />
+          {/* Flour Dusting Highlights */}
+          <ellipse cx="520" cy="510" rx="55" ry="22" fill="#FFFBF0" opacity="0.45" />
+          <ellipse cx="680" cy="520" rx="45" ry="18" fill="#FFFBF0" opacity="0.45" />
+        </g>
+      </g>
+    );
+  }
+
+  if (isDairy) {
+    // 🥛 BARISTA OAT MILK / DAIRY CARTON
+    return (
+      <g>
+        {/* Soft realistic ground shadow */}
+        <ellipse cx="600" cy="800" rx="360" ry="30" fill="rgba(66, 45, 30, 0.22)" filter="url(#cleanGroundBlur)" />
+        <ellipse cx="600" cy="796" rx="250" ry="16" fill="rgba(66, 45, 30, 0.30)" filter="blur(8px)" />
+
+        <g transform="translate(0, 10)">
+          {/* Gable Top */}
+          <path d="M 515 440 L 600 360 L 685 440 Z" fill="#E5E5E5" stroke="#222" strokeWidth="3" />
+          <rect x="515" y="440" width="170" height="340" rx="8" fill="#F4F4F0" stroke="#D0D0CA" strokeWidth="3" />
+          {/* Label banner */}
+          <rect x="530" y="475" width="140" height="190" rx="6" fill="#2d6a4f" />
+          <text x="600" y="520" textAnchor="middle" fill="#FFF" fontSize="16" fontWeight="900" letterSpacing="2">
+            BARISTA
+          </text>
+          <text x="600" y="555" textAnchor="middle" fill="#E6BF83" fontSize="22" fontWeight="900">
+            OAT MILK
+          </text>
+          <text x="600" y="590" textAnchor="middle" fill="#FFF" fontSize="12" fontWeight="700">
+            1 LITRE / 100% PLANT
+          </text>
+        </g>
+      </g>
+    );
+  }
+
+  if (isApple) {
+    // 🍎 CRISP HONEYCRISP APPLE
+    return (
+      <g>
+        {/* Soft realistic ground shadow */}
+        <ellipse cx="600" cy="800" rx="320" ry="28" fill="rgba(66, 45, 30, 0.22)" filter="url(#cleanGroundBlur)" />
+        <g transform="translate(0, 20)">
+          <path
+            d="M 600 480 C 520 400, 420 520, 460 690 C 500 790, 580 770, 600 750 C 620 770, 700 790, 740 690 C 780 520, 680 400, 600 480 Z"
+            fill="#C62828"
+            stroke="#7F0000"
+            strokeWidth="4"
+          />
+          <path d="M 600 480 Q 610 420 625 400" stroke="#4E342E" strokeWidth="7" fill="none" strokeLinecap="round" />
+          <path d="M 610 435 Q 645 415 675 430 Q 655 455 610 435 Z" fill="#4CAF50" stroke="#2E7D32" strokeWidth="2.5" />
+        </g>
+      </g>
+    );
+  }
+
+  // 🥑 DEFAULT: ARTISAN AVOCADO TOAST
+  return (
+    <g>
+      {/* Soft ground drop shadow */}
+      <ellipse cx="600" cy="790" rx="340" ry="26" fill="rgba(66, 45, 30, 0.20)" filter="url(#cleanGroundBlur)" />
+      <g transform="translate(600, 580) scale(1.7)">
+        <path
+          d="M -130 -20 C -140 -70, -70 -95, 0 -90 C 70 -95, 140 -70, 130 -20 C 120 45, -120 45, -130 -20 Z"
+          fill="#c49a6c"
+          stroke="#8b5e34"
+          strokeWidth="4"
+        />
+        <path
+          d="M -110 -20 C -120 -60, -60 -75, 0 -70 C 60 -75, 120 -60, 110 -20 C 100 30, -100 30, -110 -20 Z"
+          fill="#70a340"
+        />
+        <ellipse cx="10" cy="-20" rx="44" ry="32" fill="#ffffff" />
+        <ellipse cx="15" cy="-20" rx="24" ry="20" fill="#f59e0b" />
+      </g>
+    </g>
+  );
+}
+
 interface SocialCampaignDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -243,6 +491,11 @@ export function SocialCampaignDialog({
         break;
 
       case 'matcha':
+        setCustomImage(null);
+        setOriginalImage(null);
+        setCutoutImage(null);
+        setIsCutoutActive(false);
+        setCustomImageName(null);
         setSelectedTheme('editorial-fresh');
         setPoster((prev) => ({
           ...prev,
@@ -268,6 +521,11 @@ export function SocialCampaignDialog({
         break;
 
       case 'espresso':
+        setCustomImage(null);
+        setOriginalImage(null);
+        setCutoutImage(null);
+        setIsCutoutActive(false);
+        setCustomImageName(null);
         setSelectedTheme('dark-luxury');
         setPoster((prev) => ({
           ...prev,
@@ -289,10 +547,15 @@ export function SocialCampaignDialog({
           accentColor: '#D97706',
           mutedTextColor: '#D6C7B2',
         }));
-        toast.success('Adapted to Espresso Roast Beans (Stock Item)!');
+        toast.success('Adapted to Espresso Roast Beans 1kg (Stock Item)!');
         break;
 
       case 'sourdough':
+        setCustomImage(null);
+        setOriginalImage(null);
+        setCutoutImage(null);
+        setIsCutoutActive(false);
+        setCustomImageName(null);
         setSelectedTheme('editorial-fresh');
         setPoster((prev) => ({
           ...prev,
@@ -318,6 +581,11 @@ export function SocialCampaignDialog({
         break;
 
       case 'oatmilk':
+        setCustomImage(null);
+        setOriginalImage(null);
+        setCutoutImage(null);
+        setIsCutoutActive(false);
+        setCustomImageName(null);
         setSelectedTheme('editorial-fresh');
         setPoster((prev) => ({
           ...prev,
@@ -1022,7 +1290,7 @@ export function SocialCampaignDialog({
                       </text>
                     </g>
 
-                    {/* 5. HERO PRODUCT STAGE: NO BORDER BOX! OPEN, AIRY CANVAS */}
+                    {/* 5. HERO PRODUCT STAGE: DYNAMIC PRODUCT-ACCURATE ARTWORK (OR CUSTOM CUTOUT) */}
                     <g transform="translate(0, 80)">
                       {customImage ? (
                         <g>
@@ -1056,24 +1324,8 @@ export function SocialCampaignDialog({
                           />
                         </g>
                       ) : (
-                        /* Default Minimal Vector Silhouette if no photo uploaded */
-                        <g>
-                          <ellipse cx="600" cy="790" rx="340" ry="26" fill="rgba(66, 45, 30, 0.20)" filter="url(#cleanGroundBlur)" />
-                          <g transform="translate(600, 580) scale(1.7)">
-                            <path
-                              d="M -130 -20 C -140 -70, -70 -95, 0 -90 C 70 -95, 140 -70, 130 -20 C 120 45, -120 45, -130 -20 Z"
-                              fill="#c49a6c"
-                              stroke="#8b5e34"
-                              strokeWidth="4"
-                            />
-                            <path
-                              d="M -110 -20 C -120 -60, -60 -75, 0 -70 C 60 -75, 120 -60, 110 -20 C 100 30, -100 30, -110 -20 Z"
-                              fill="#70a340"
-                            />
-                            <ellipse cx="10" cy="-20" rx="44" ry="32" fill="#ffffff" />
-                            <ellipse cx="15" cy="-20" rx="24" ry="20" fill="#f59e0b" />
-                          </g>
-                        </g>
+                        /* Product-Accurate Vector Visual Matching The Actual Stock Item */
+                        renderDefaultProductVisual(targetItem, poster)
                       )}
                     </g>
 
