@@ -83,6 +83,34 @@ export function generateFallbackPosterDesign(input: GeneratePosterInput): Poster
     benefitTag = 'RICH & CREAMY';
     footerTagline = 'CLEAN INGREDIENTS • ZERO PRESERVATIVES';
   } else if (
+    itemLower.includes('coconut') ||
+    itemLower.includes('coco') ||
+    itemLower.includes('tropical') ||
+    itemLower.includes('pineapple') ||
+    itemLower.includes('mango')
+  ) {
+    illustration = 'fresh';
+    if (!input.stylePreference) theme = 'editorial-fresh';
+    headline = itemRaw && itemRaw !== 'Featured Item' ? itemRaw.toUpperCase() : 'FRESH COCONUT';
+    subheadline = 'Pure Island Harvest';
+    categoryTag = 'TROPICAL RESERVE';
+    benefitTag = '100% NATURAL WATER';
+    footerTagline = 'SUSTAINABLY HARVESTED • NATURALLY SWEET & HYDRATING';
+  } else if (
+    itemLower.includes('cola') ||
+    itemLower.includes('coca') ||
+    itemLower.includes('pepsi') ||
+    itemLower.includes('soda') ||
+    itemLower.includes('soft drink')
+  ) {
+    illustration = 'beverage';
+    if (!input.stylePreference) theme = 'dark-luxury';
+    headline = itemRaw && itemRaw !== 'Featured Item' ? itemRaw.toUpperCase() : 'ICE COLD REFRESH';
+    subheadline = 'Chilled Selection';
+    categoryTag = 'COLD BEVERAGES';
+    benefitTag = 'BEST SERVED CHILLED';
+    footerTagline = 'ORIGINAL REFRESHMENT • CRISP & ICY';
+  } else if (
     itemLower.includes('tea') ||
     itemLower.includes('chai') ||
     itemLower.includes('ginger ale') ||
@@ -94,7 +122,7 @@ export function generateFallbackPosterDesign(input: GeneratePosterInput): Poster
   ) {
     illustration = 'beverage';
     if (!input.stylePreference) theme = 'editorial-fresh';
-    headline = 'CRAFT REFRESH';
+    headline = itemRaw && itemRaw !== 'Featured Item' ? itemRaw.toUpperCase() : 'CRAFT REFRESH';
     subheadline = 'Artisan Botanicals';
     categoryTag = 'CHILLED RESERVE';
     benefitTag = 'NATURAL FLAVORS';
@@ -120,7 +148,7 @@ export function generateFallbackPosterDesign(input: GeneratePosterInput): Poster
   ) {
     illustration = 'fresh';
     if (!input.stylePreference) theme = 'fresh-organic';
-    headline = 'FRESH HARVEST';
+    headline = itemRaw && itemRaw !== 'Featured Item' ? itemRaw.toUpperCase() : 'FRESH HARVEST';
     subheadline = 'Orchard Selected';
     categoryTag = 'CERTIFIED ORGANIC';
     benefitTag = 'TREE RIPENED';
@@ -133,7 +161,7 @@ export function generateFallbackPosterDesign(input: GeneratePosterInput): Poster
   ) {
     illustration = 'grocery';
     if (!input.stylePreference) theme = 'editorial-fresh';
-    headline = 'PANTRY RESERVE';
+    headline = itemRaw && itemRaw !== 'Featured Item' ? itemRaw.toUpperCase() : 'PANTRY RESERVE';
     subheadline = 'Cold Pressed & Pure';
     categoryTag = 'ARTISAN PANTRY';
     benefitTag = 'UNREFINED QUALITY';
@@ -145,10 +173,10 @@ export function generateFallbackPosterDesign(input: GeneratePosterInput): Poster
     dealLower.includes('sale')
   ) {
     illustration = 'sale';
-    headline = 'WEEKEND SPECIAL';
-    subheadline = 'Limited Release';
+    headline = itemRaw && itemRaw !== 'Featured Item' ? itemRaw.toUpperCase() : 'CLEARANCE SPECIAL';
+    subheadline = 'Limited In-Store Offer';
     categoryTag = 'STORE EXCLUSIVE';
-    benefitTag = 'WHILE STOCKS LAST';
+    benefitTag = input.deal ? input.deal.toUpperCase() : 'WHILE STOCKS LAST';
     footerTagline = 'SPECIAL PRICING • LOCAL COMMUNITY OFFER';
   } else {
     // General fallback adapted from the product name
