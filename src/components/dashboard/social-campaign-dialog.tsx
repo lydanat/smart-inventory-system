@@ -366,8 +366,8 @@ export function SocialCampaignDialog({
 
   if (!campaign) return null;
 
-  const headline = poster.headline || campaign.posterHeadline || campaign.title.toUpperCase();
-  const cta = poster.callToAction || campaign.callToAction || 'VISIT IN-STORE TODAY TO REDEEM';
+  const headline = poster.headline !== undefined ? poster.headline : (campaign.posterHeadline || campaign.title.toUpperCase());
+  const cta = poster.callToAction !== undefined ? poster.callToAction : (campaign.callToAction || 'VISIT IN-STORE TODAY TO REDEEM');
 
   // Format Facebook Caption without inappropriate placeholder text
   const caption =
@@ -1207,88 +1207,96 @@ export function SocialCampaignDialog({
                     </g>
 
                     {/* 2. MAIN BOLD CONDENSED HEADLINE (Giant Editorial Impact) */}
-                    <g transform="translate(600, 210)">
-                      <text
-                        x="0"
-                        y="0"
-                        textAnchor="middle"
-                        fill={poster.primaryColor || '#1B3B22'}
-                        fontSize={
-                          headline.length > 20
-                            ? '86'
-                            : headline.length > 14
-                            ? '102'
-                            : '120'
-                        }
-                        fontWeight="900"
-                        letterSpacing="3"
-                        fontFamily="Impact, 'Arial Black', -apple-system, sans-serif"
-                      >
-                        {headline}
-                      </text>
-                    </g>
+                    {headline.trim() !== '' && (
+                      <g transform="translate(600, 210)">
+                        <text
+                          x="0"
+                          y="0"
+                          textAnchor="middle"
+                          fill={poster.primaryColor || '#1B3B22'}
+                          fontSize={
+                            headline.length > 20
+                              ? '86'
+                              : headline.length > 14
+                              ? '102'
+                              : '120'
+                          }
+                          fontWeight="900"
+                          letterSpacing="3"
+                          fontFamily="Impact, 'Arial Black', -apple-system, sans-serif"
+                        >
+                          {headline}
+                        </text>
+                      </g>
+                    )}
 
                     {/* 3. SUBTITLE: PAIRING CONTRASTING SCRIPT ACCENT WITH DELICATE MOTIFS */}
-                    <g transform="translate(600, 290)">
-                      {/* Left Ornament: Delicate Intersecting Rings */}
-                      <g transform="translate(-320, -14)">
-                        <circle cx="-12" cy="0" r="16" fill="none" stroke={poster.primaryColor} strokeWidth="2.5" />
-                        <circle cx="12" cy="0" r="16" fill="none" stroke={poster.primaryColor} strokeWidth="2.5" />
-                      </g>
+                    {poster.subheadline && poster.subheadline.trim() !== '' && (
+                      <g transform="translate(600, 290)">
+                        {/* Left Ornament: Delicate Intersecting Rings */}
+                        <g transform="translate(-320, -14)">
+                          <circle cx="-12" cy="0" r="16" fill="none" stroke={poster.primaryColor} strokeWidth="2.5" />
+                          <circle cx="12" cy="0" r="16" fill="none" stroke={poster.primaryColor} strokeWidth="2.5" />
+                        </g>
 
-                      {/* Cursive Subtitle */}
-                      <text
-                        x="0"
-                        y="2"
-                        textAnchor="middle"
-                        fill={poster.primaryColor || '#1B3B22'}
-                        fontSize="54"
-                        fontStyle="italic"
-                        fontWeight="600"
-                        fontFamily="'Brush Script MT', 'Baskerville', 'Playfair Display', Georgia, serif"
-                      >
-                        {poster.subheadline || 'Healthy Choice'}
-                      </text>
+                        {/* Cursive Subtitle */}
+                        <text
+                          x="0"
+                          y="2"
+                          textAnchor="middle"
+                          fill={poster.primaryColor || '#1B3B22'}
+                          fontSize="54"
+                          fontStyle="italic"
+                          fontWeight="600"
+                          fontFamily="'Brush Script MT', 'Baskerville', 'Playfair Display', Georgia, serif"
+                        >
+                          {poster.subheadline}
+                        </text>
 
-                      {/* Right Ornament: Minimalist Parallel Rules */}
-                      <g transform="translate(250, -22)">
-                        <line x1="0" y1="0" x2="60" y2="0" stroke={poster.primaryColor} strokeWidth="2" />
-                        <line x1="0" y1="8" x2="60" y2="8" stroke={poster.primaryColor} strokeWidth="2" />
-                        <line x1="0" y1="16" x2="60" y2="16" stroke={poster.primaryColor} strokeWidth="2" />
-                        <line x1="0" y1="24" x2="60" y2="24" stroke={poster.primaryColor} strokeWidth="2" />
-                        <line x1="0" y1="32" x2="60" y2="32" stroke={poster.primaryColor} strokeWidth="2" />
+                        {/* Right Ornament: Minimalist Parallel Rules */}
+                        <g transform="translate(250, -22)">
+                          <line x1="0" y1="0" x2="60" y2="0" stroke={poster.primaryColor} strokeWidth="2" />
+                          <line x1="0" y1="8" x2="60" y2="8" stroke={poster.primaryColor} strokeWidth="2" />
+                          <line x1="0" y1="16" x2="60" y2="16" stroke={poster.primaryColor} strokeWidth="2" />
+                          <line x1="0" y1="24" x2="60" y2="24" stroke={poster.primaryColor} strokeWidth="2" />
+                          <line x1="0" y1="32" x2="60" y2="32" stroke={poster.primaryColor} strokeWidth="2" />
+                        </g>
                       </g>
-                    </g>
+                    )}
 
                     {/* 4. UPPER CORNER ANNOTATION TAGS (Spacious, safe margins far from product) */}
-                    <g transform="translate(100, 390)">
-                      <text
-                        x="0"
-                        y="0"
-                        fill={poster.primaryColor || '#1B3B22'}
-                        fontSize="22"
-                        fontWeight="900"
-                        letterSpacing="3"
-                        fontFamily="system-ui, -apple-system, sans-serif"
-                      >
-                        {poster.category ? poster.category.slice(0, 26).toUpperCase() : 'CRAFT SELECTION'}
-                      </text>
-                    </g>
+                    {poster.category && poster.category.trim() !== '' && (
+                      <g transform="translate(100, 390)">
+                        <text
+                          x="0"
+                          y="0"
+                          fill={poster.primaryColor || '#1B3B22'}
+                          fontSize="22"
+                          fontWeight="900"
+                          letterSpacing="3"
+                          fontFamily="system-ui, -apple-system, sans-serif"
+                        >
+                          {poster.category.slice(0, 26).toUpperCase()}
+                        </text>
+                      </g>
+                    )}
 
-                    <g transform="translate(1100, 940)">
-                      <text
-                        x="0"
-                        y="0"
-                        textAnchor="end"
-                        fill={poster.primaryColor || '#1B3B22'}
-                        fontSize="22"
-                        fontWeight="900"
-                        letterSpacing="3"
-                        fontFamily="system-ui, -apple-system, sans-serif"
-                      >
-                        {poster.offerHighlight ? poster.offerHighlight.slice(0, 30).toUpperCase() : 'SIMPLE TASTE'}
-                      </text>
-                    </g>
+                    {poster.offerHighlight && poster.offerHighlight.trim() !== '' && (
+                      <g transform="translate(1100, 940)">
+                        <text
+                          x="0"
+                          y="0"
+                          textAnchor="end"
+                          fill={poster.primaryColor || '#1B3B22'}
+                          fontSize="22"
+                          fontWeight="900"
+                          letterSpacing="3"
+                          fontFamily="system-ui, -apple-system, sans-serif"
+                        >
+                          {poster.offerHighlight.slice(0, 30).toUpperCase()}
+                        </text>
+                      </g>
+                    )}
 
                     {/* 5. HERO PRODUCT STAGE: DYNAMIC PRODUCT-ACCURATE ARTWORK (OR CUSTOM CUTOUT) */}
                     <g transform="translate(0, 80)">
@@ -1331,74 +1339,82 @@ export function SocialCampaignDialog({
 
                     {/* 6. CLEAN TYPOGRAPHIC INFORMATION ROW (NO BORDERED BOXES! NO EMOJIS!) */}
                     <g transform="translate(60, 1020)">
-                      {/* Hairline Top Divider */}
-                      <line
-                        x1="40"
-                        y1="0"
-                        x2="1040"
-                        y2="0"
-                        stroke={poster.primaryColor}
-                        strokeOpacity="0.18"
-                        strokeWidth="1.5"
-                      />
-
                       {/* Deal / Offer Callout (Clean, high-legibility bold typography) */}
-                      <text
-                        x="540"
-                        y="50"
-                        textAnchor="middle"
-                        fill={poster.primaryColor || '#1B3B22'}
-                        fontSize="32"
-                        fontWeight="900"
-                        letterSpacing="1.5"
-                        fontFamily="system-ui, -apple-system, sans-serif"
-                      >
-                        {poster.badge || 'SPECIAL OFFER AVAILABLE IN-STORE'}
-                      </text>
-
-                      {/* Hairline Middle Divider */}
-                      <line
-                        x1="40"
-                        y1="85"
-                        x2="1040"
-                        y2="85"
-                        stroke={poster.primaryColor}
-                        strokeOpacity="0.18"
-                        strokeWidth="1.5"
-                      />
+                      {poster.badge && poster.badge.trim() !== '' && (
+                        <>
+                          <line
+                            x1="40"
+                            y1="0"
+                            x2="1040"
+                            y2="0"
+                            stroke={poster.primaryColor}
+                            strokeOpacity="0.18"
+                            strokeWidth="1.5"
+                          />
+                          <text
+                            x="540"
+                            y="50"
+                            textAnchor="middle"
+                            fill={poster.primaryColor || '#1B3B22'}
+                            fontSize="32"
+                            fontWeight="900"
+                            letterSpacing="1.5"
+                            fontFamily="system-ui, -apple-system, sans-serif"
+                          >
+                            {poster.badge}
+                          </text>
+                          <line
+                            x1="40"
+                            y1="85"
+                            x2="1040"
+                            y2="85"
+                            stroke={poster.primaryColor}
+                            strokeOpacity="0.18"
+                            strokeWidth="1.5"
+                          />
+                        </>
+                      )}
 
                       {/* Clean 3-Column Typographic Schedule / Location Grid */}
-                      <g transform="translate(0, 140)">
-                        {/* Col 1: Schedule */}
-                        <g transform="translate(60, 0)">
-                          <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
-                            SCHEDULE
-                          </text>
-                          <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
-                            {poster.eventDates ? poster.eventDates.slice(0, 26) : 'Limited Batch Special'}
-                          </text>
-                        </g>
+                      {(poster.eventDates || poster.eventTime || poster.location) && (
+                        <g transform="translate(0, 140)">
+                          {/* Col 1: Schedule */}
+                          {poster.eventDates && poster.eventDates.trim() !== '' && (
+                            <g transform="translate(60, 0)">
+                              <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
+                                SCHEDULE
+                              </text>
+                              <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
+                                {poster.eventDates.slice(0, 26)}
+                              </text>
+                            </g>
+                          )}
 
-                        {/* Col 2: Hours */}
-                        <g transform="translate(420, 0)">
-                          <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
-                            HOURS
-                          </text>
-                          <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
-                            {poster.eventTime ? poster.eventTime.slice(0, 24) : 'Regular Store Hours'}
-                          </text>
-                        </g>
+                          {/* Col 2: Hours */}
+                          {poster.eventTime && poster.eventTime.trim() !== '' && (
+                            <g transform="translate(420, 0)">
+                              <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
+                                HOURS
+                              </text>
+                              <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
+                                {poster.eventTime.slice(0, 24)}
+                              </text>
+                            </g>
+                          )}
 
-                        {/* Col 3: Location */}
-                        <g transform="translate(760, 0)">
-                          <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
-                            LOCATION
-                          </text>
-                          <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
-                            {poster.location ? poster.location.slice(0, 26) : `${businessName} Store`}
-                          </text>
+                          {/* Col 3: Location */}
+                          {poster.location && poster.location.trim() !== '' && (
+                            <g transform="translate(760, 0)">
+                              <text x="0" y="0" fill={poster.mutedTextColor || '#422D1E'} fontSize="16" fontWeight="800" letterSpacing="2">
+                                LOCATION
+                              </text>
+                              <text x="0" y="34" fill={poster.textColor || '#1B3B22'} fontSize="22" fontWeight="700">
+                                {poster.location.slice(0, 26)}
+                              </text>
+                            </g>
+                          )}
                         </g>
-                      </g>
+                      )}
                     </g>
 
                     {/* 7. FOOTER MOTTO & BADGES */}
@@ -1414,20 +1430,20 @@ export function SocialCampaignDialog({
                       </g>
 
                       {/* Center Provenance Tagline */}
-                      <text
-                        x="540"
-                        y="6"
-                        textAnchor="middle"
-                        fill={poster.primaryColor || '#1B3B22'}
-                        fontSize="23"
-                        fontWeight="800"
-                        letterSpacing="3"
-                        fontFamily="system-ui, -apple-system, sans-serif"
-                      >
-                        {poster.productDescription
-                          ? poster.productDescription.slice(0, 48).toUpperCase()
-                          : 'NATURAL INGREDIENTS • HOUSE RECIPES'}
-                      </text>
+                      {poster.productDescription && poster.productDescription.trim() !== '' && (
+                        <text
+                          x="540"
+                          y="6"
+                          textAnchor="middle"
+                          fill={poster.primaryColor || '#1B3B22'}
+                          fontSize="23"
+                          fontWeight="800"
+                          letterSpacing="3"
+                          fontFamily="system-ui, -apple-system, sans-serif"
+                        >
+                          {poster.productDescription.slice(0, 48).toUpperCase()}
+                        </text>
+                      )}
 
                       {/* Right Oval Pill Badge: EST. 2026 */}
                       <g transform="translate(930, -18)">
@@ -1457,44 +1473,48 @@ export function SocialCampaignDialog({
                     </g>
 
                     {/* 8. HIGH-CONTRAST CLEAN CALL TO ACTION FOOTER BAR (NO EMOJIS!) */}
-                    <g transform="translate(60, 1460)">
-                      <rect
-                        x="40"
-                        y="0"
-                        width="1000"
-                        height="85"
-                        rx="18"
-                        fill={poster.primaryColor || '#1B3B22'}
-                      />
-                      <text
-                        x="540"
-                        y="52"
-                        textAnchor="middle"
-                        fill={poster.backgroundColor || '#F9F7ED'}
-                        fontSize="28"
-                        fontWeight="900"
-                        letterSpacing="3"
-                        fontFamily="system-ui, -apple-system, sans-serif"
-                      >
-                        {poster.callToAction || 'VISIT IN-STORE TODAY TO REDEEM'}
-                      </text>
-                    </g>
+                    {poster.callToAction && poster.callToAction.trim() !== '' && (
+                      <g transform="translate(60, 1460)">
+                        <rect
+                          x="40"
+                          y="0"
+                          width="1000"
+                          height="85"
+                          rx="18"
+                          fill={poster.primaryColor || '#1B3B22'}
+                        />
+                        <text
+                          x="540"
+                          y="52"
+                          textAnchor="middle"
+                          fill={poster.backgroundColor || '#F9F7ED'}
+                          fontSize="28"
+                          fontWeight="900"
+                          letterSpacing="3"
+                          fontFamily="system-ui, -apple-system, sans-serif"
+                        >
+                          {poster.callToAction}
+                        </text>
+                      </g>
+                    )}
 
                     {/* Fine Print Note */}
-                    <g transform="translate(600, 1590)">
-                      <text
-                        x="0"
-                        y="0"
-                        textAnchor="middle"
-                        fill={poster.mutedTextColor || '#422D1E'}
-                        fontSize="15"
-                        fontWeight="500"
-                        opacity="0.75"
-                        fontFamily="system-ui, -apple-system, sans-serif"
-                      >
-                        {poster.finePrint || '*Handcrafted daily with fresh locally sourced ingredients. While supplies last.'}
-                      </text>
-                    </g>
+                    {poster.finePrint && poster.finePrint.trim() !== '' && (
+                      <g transform="translate(600, 1590)">
+                        <text
+                          x="0"
+                          y="0"
+                          textAnchor="middle"
+                          fill={poster.mutedTextColor || '#422D1E'}
+                          fontSize="15"
+                          fontWeight="500"
+                          opacity="0.75"
+                          fontFamily="system-ui, -apple-system, sans-serif"
+                        >
+                          {poster.finePrint}
+                        </text>
+                      </g>
+                    )}
                   </svg>
                 </div>
               </div>
